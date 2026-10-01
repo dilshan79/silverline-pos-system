@@ -1,0 +1,214 @@
+<div class="posbar">
+  <div><span class="mut">Terminal</span><b>#1</b></div>
+  <div><span class="mut">Location</span><b>MW – Bravo Bus Stand</b></div>
+  <div><span class="mut">Cashier</span><b>Rashmika</b></div>
+  <div><span class="mut">Salesman</span><select><option>N/D</option><option>Kasun</option></select></div>
+  <div><span class="mut">Invoice No</span><b>INMW1000014</b></div>
+  <div><span class="mut">Customer</span><select><option>Cash Customer</option><option>+ Add / Search</option></select></div>
+  <div style="margin-left:auto"><span class="mut" id="clk">{{ currentDateTime | date:'yyyy-MM-dd HH:mm:ss' }}</span></div>
+</div>
+
+<div class="two" style="margin-top:10px">
+  <div>
+    <input style="width:100%" [(ngModel)]="searchText" (keyup.enter)="onSearchEnter()" placeholder="Scan barcode / IMEI / PLU / suspended bill or search item…">
+    <div class="tabs">
+      <button class="chip on">Phones</button>
+      <button class="chip">Accessories</button>
+      <button class="chip">Services</button>
+    </div>
+
+    <div class="grid prod">
+      <div *ngFor="let item of items; let i = index" class="card p" (click)="addToCart(i)">
+        <i></i>
+        <div>{{ item.name }}</div>
+        <b>{{ item.price | currencyLkr }}</b><br>
+        <span class="bd" [ngClass]="item.stock < 3 ? 'r' : 'g'">
+          {{ item.stock < 3 ? 'Low ' + item.stock : 'In stock' }}
+        </span>
+      </div>
+      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Light Bill</div><b>Express</b></div>
+      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Water Bill</div><b>Express</b></div>
+      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Thoga Card</div><b>Express</b></div>
+      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Dialog 4G Antenna Fix</div><b>Service</b></div>
+    </div>
+
+    <b style="display:block;margin:14px 0 6px">Functions</b>
+    <div class="fbar">
+      <button class="fb" (click)="suspendBill()" title="Save this bill and print a slip with barcode">Suspend</button>
+      <button class="fb" (click)="openRecall()" title="Recall a suspended bill">Recall</button>
+      <button class="fb" (click)="voidSelectedItem()" style="background:var(--bad);color:#fff">Void</button>
+      <button class="fb">Return</button>
+      <button class="fb">No Sale</button>
+      <button class="fb">Discount</button>
+      <button class="fb">Discount Type</button>
+      <button class="fb">New Price</button>
+      <button class="fb">Copy Line</button>
+      <button class="fb" (click)="voidSelectedItem()">Remove</button>
+      <button class="fb">Seek</button>
+      <button class="fb">Float Cash</button>
+      <button class="fb">Paid In</button>
+      <button class="fb">Paid Out</button>
+      <button class="fb">Print On</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between">
+      <b>Bill</b>
+      <span class="mut">Order No ORMW1000001</span>
+    </div>
+
+    <div style="min-height:110px;max-height:260px;overflow-y:auto;margin-top:6px">
+      <div *ngFor="let entry of getCartEntries()" 
+           class="line cart-entry" 
+           [class.selected-cart]="selectedCartIndex === entry.itemIndex"
+           (click)="selectCartItem(entry.itemIndex)">
+        <div style="display:flex;flex-direction:column;flex:1">
+          <span style="font-weight:600">{{ entry.item.name }}</span>
+          <small class="mut">{{ entry.item.price | currencyLkr }} each</small>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="btn-qty" (click)="decreaseQty(entry.itemIndex, $event)">-</button>
+          <span style="font-weight:bold;min-width:20px;text-align:center">{{ entry.qty }}</span>
+          <button class="btn-qty" (click)="increaseQty(entry.itemIndex, $event)">+</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:6px">
+          <span style="font-weight:600;min-width:65px;text-align:right">{{ entry.subtotal | currencyLkr }}</span>
+          <button class="btn-void-line" (click)="voidCartItem(entry.itemIndex, $event)" title="Void Item">✕</button>
+        </div>
+      </div>
+      <p *ngIf="getCartEntries().length === 0" class="mut" style="text-align:center;padding:20px 0">Tap a product to add it.</p>
+    </div>
+
+    <div class="line"><span>Sub total</span><span>{{ getCartTotal() | currencyLkr }}</span></div>
+    <div class="total"><span>Net value</span><span>{{ getCartTotal() | currencyLkr }}</span></div>
+
+    <div class="fg" style="grid-template-columns:1fr 1fr;margin:4px 0 10px">
+      <label>
+        Tendered (Customer)
+        <div style="display:flex;gap:4px">
+          <input type="number" [(ngModel)]="tenderedAmount" placeholder="0.00" style="flex:1">
+          <button class="btn acc" (click)="openKeypad()" title="Open Keyboard / Numpad" style="padding:0 12px;font-size:16px;font-weight:bold">+</button>
+        </div>
+      </label>
+      <label>
+        Balance / Change
+        <input type="text" [value]="getBalance() | currencyLkr" [class.balance-ok]="getBalance() >= 0" [class.balance-short]="getBalance() < 0 && getCartTotal() > 0" disabled style="font-weight:bold">
+      </label>
+    </div>
+
+    <b class="mut">Pay with</b>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">
+      <button class="btn alt" style="flex:1" (click)="openKeypad()">💵 Cash</button>
+      <button class="btn alt" style="flex:1">Cheque</button>
+      <button class="btn alt" style="flex:1">Credit</button>
+      <button class="btn alt" style="flex:1">Split</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="btn alt" style="flex:1">💳 Visa</button>
+      <button class="btn alt" style="flex:1">💳 MasterCard</button>
+      <button class="btn alt" style="flex:1">💳 Amex</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="btn alt" style="flex:1">🎁 Gift Voucher</button>
+      <button class="btn alt" style="flex:1">⭐ Loyalty</button>
+      <button class="btn alt" style="flex:1">Credit Note</button>
+    </div>
+
+    <button class="btn acc" style="width:100%" (click)="checkout()">CHARGE / CASH</button>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <button class="btn red" style="flex:1" (click)="clearCart()">Cancel</button>
+      <button class="btn alt" style="flex:1">Log Off</button>
+    </div>
+    <p class="mut" style="text-align:center;margin-top:10px">🖨 Slip printer: ON &nbsp;·&nbsp; 🌐 LAN &nbsp;·&nbsp; EN / SIN</p>
+  </div>
+</div>
+
+<!-- Keypad Modal for entering customer given amount -->
+<div class="keypad-modal-backdrop" *ngIf="showKeypad" (click)="closeKeypad()">
+  <div class="keypad-modal card" (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0;font-size:16px;display:flex;align-items:center;gap:6px">
+        <span>⌨ Customer Given Amount</span>
+      </h3>
+      <button class="btn-close" (click)="closeKeypad()">✕</button>
+    </div>
+
+    <!-- Total Summary -->
+    <div class="keypad-summary">
+      <div>
+        <span class="mut">Total Payable</span>
+        <div class="summary-val total-val">{{ getCartTotal() | currencyLkr }}</div>
+      </div>
+      <div>
+        <span class="mut">Customer Given</span>
+        <div class="summary-val tendered-val">{{ (tenderedAmount || 0) | currencyLkr }}</div>
+      </div>
+    </div>
+
+    <!-- Balance Box -->
+    <div class="balance-box" [ngClass]="getBalance() >= 0 ? 'bg-success' : 'bg-warning'">
+      <span>Balance to Return:</span>
+      <b class="balance-amount">{{ getBalance() | currencyLkr }}</b>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="quick-presets">
+      <button class="chip" (click)="setPreset('exact')">Exact Total</button>
+      <button class="chip" (click)="addPreset(500)">+500</button>
+      <button class="chip" (click)="addPreset(1000)">+1,000</button>
+      <button class="chip" (click)="addPreset(2000)">+2,000</button>
+      <button class="chip" (click)="addPreset(5000)">+5,000</button>
+    </div>
+
+    <!-- Numpad Grid -->
+    <div class="numpad-grid">
+      <button (click)="keypadPress('7')">7</button>
+      <button (click)="keypadPress('8')">8</button>
+      <button (click)="keypadPress('9')">9</button>
+      <button class="btn-clear" (click)="keypadPress('C')">C</button>
+
+      <button (click)="keypadPress('4')">4</button>
+      <button (click)="keypadPress('5')">5</button>
+      <button (click)="keypadPress('6')">6</button>
+      <button class="btn-back" (click)="keypadPress('BS')">⌫</button>
+
+      <button (click)="keypadPress('1')">1</button>
+      <button (click)="keypadPress('2')">2</button>
+      <button (click)="keypadPress('3')">3</button>
+      <button (click)="keypadPress('00')">00</button>
+
+      <button (click)="keypadPress('0')">0</button>
+      <button (click)="keypadPress('.')">.</button>
+      <button class="btn-enter" (click)="closeKeypad()">Done / OK</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Recall Suspended Bill Modal -->
+<div class="keypad-modal-backdrop" *ngIf="showRecall" (click)="closeRecall()">
+  <div class="keypad-modal card recall-modal" (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0;font-size:16px">Recall Suspended Bill</h3>
+      <button class="btn-close" (click)="closeRecall()">✕</button>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <input style="flex:1" [(ngModel)]="recallInput" (keyup.enter)="recallBill(recallInput)"
+             placeholder="Scan slip barcode or type SUS number" autofocus>
+      <button class="btn acc" (click)="recallBill(recallInput)">Recall</button>
+    </div>
+
+    <div class="recall-list">
+      <div *ngFor="let b of suspendedBills" class="line recall-row" (click)="recallBill(b.suspend_no)">
+        <div style="display:flex;flex-direction:column;flex:1">
+          <b>{{ b.suspend_no }} <small *ngIf="b.local" class="mut">(this terminal)</small></b>
+          <small class="mut">{{ b.items.length }} item(s) · {{ b.cashier }} · {{ b.created_at | date:'yyyy-MM-dd HH:mm' }}</small>
+        </div>
+        <b>{{ b.total | currencyLkr }}</b>
+      </div>
+      <p *ngIf="suspendedBills.length === 0" class="mut" style="text-align:center;padding:16px 0">No suspended bills.</p>
+    </div>
+  </div>
+</div>
