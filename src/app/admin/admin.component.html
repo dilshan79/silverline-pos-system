@@ -1,0 +1,15 @@
+<div>
+  <div class="tabs">
+    <button class="chip" [class.on]="activeTab === 'users'" (click)="activeTab = 'users'">User Management</button>
+    <button class="chip" [class.on]="activeTab === 'roles'" (click)="activeTab = 'roles'">Roles & Permissions</button>
+    <button class="chip" [class.on]="activeTab === 'settings'" (click)="activeTab = 'settings'">System Settings</button>
+    <button class="chip" [class.on]="activeTab === 'audit'" (click)="activeTab = 'audit'">Audit Trail Logs</button>
+    <button class="chip" [class.on]="activeTab === 'service-types'" (click)="activeTab = 'service-types'">Service Master Config</button>
+  </div>
+
+  <app-users *ngIf="activeTab === 'users'"></app-users>
+  <app-roles-permissions *ngIf="activeTab === 'roles'"></app-roles-permissions>
+  <app-settings *ngIf="activeTab === 'settings'"></app-settings>
+  <app-audit-log *ngIf="activeTab === 'audit'"></app-audit-log>
+  <app-service-types *ngIf="activeTab === 'service-types'"></app-service-types>
+</div>

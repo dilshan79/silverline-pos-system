@@ -1,0 +1,262 @@
+<div class="card">
+  <!-- Header -->
+  <div class="hd" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h3 style="margin:0 0 4px">Transfer of Goods (TOG) & Inter-Branch Stock Movement</h3>
+      <p class="mut" style="margin:0;font-size:13px">Issue and record stock transfers between store locations, shops and warehouses</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="chip" [class.on]="activeSubTab === 'new'" (click)="activeSubTab = 'new'">+ New Transfer Order</button>
+      <button class="chip" [class.on]="activeSubTab === 'history'" (click)="activeSubTab = 'history'">Transfer History & Slips</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMsg" class="alert-success" style="padding:10px 14px;background:#e6f4ea;color:#137333;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✓ {{ successMsg }}
+  </div>
+
+  <div *ngIf="errorMsg" class="alert-danger" style="padding:10px 14px;background:#fce8e6;color:#c5221f;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✕ {{ errorMsg }}
+  </div>
+
+  <!-- SubTab 1: New Transfer Order -->
+  <div *ngIf="activeSubTab === 'new'">
+    <!-- Branch Routing Header Card -->
+    <div style="background:var(--bg);padding:14px 16px;border-radius:8px;margin-bottom:16px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center">
+      <div>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+          <span style="color:var(--bad)">Source Location (From Branch) *</span>
+          <select [(ngModel)]="fromLoc" (change)="onFromLocationChange()" style="padding:8px 12px;border-radius:6px;border:1px solid var(--bd);font-size:14px;font-weight:600">
+            <option *ngFor="let loc of locations" [value]="loc.code">{{ loc.name }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div style="font-size:24px;color:var(--pri);padding-top:16px">➔</div>
+
+      <div>
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+          <span style="color:var(--ok)">Destination Location (To Branch) *</span>
+          <select [(ngModel)]="toLoc" style="padding:8px 12px;border-radius:6px;border:1px solid var(--bd);font-size:14px;font-weight:600">
+            <option *ngFor="let loc of locations" [value]="loc.code" [disabled]="loc.code === fromLoc">{{ loc.name }}</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- Item Add / Staging Row -->
+    <div style="background:#fdfdfd;border:1px solid var(--bd);padding:14px 16px;border-radius:8px;margin-bottom:16px">
+      <h4 style="margin:0 0 10px;font-size:14px">Add Items to Transfer Manifest</h4>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:2;min-width:240px">
+          <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+            <span>Select Product / Item *</span>
+            <select [(ngModel)]="selectedItemCode" (change)="onItemSelect()" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+              <option *ngFor="let it of catalogItems" [value]="it.code">{{ it.name }} ({{ it.code }}) — Stock: {{ it.stock }}</option>
+            </select>
+          </label>
+        </div>
+
+        <div style="width:110px">
+          <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+            <span>Qty to Send *</span>
+            <input type="number" [(ngModel)]="transferQty" min="1" [max]="selectedItemStock" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);text-align:center;font-weight:bold" />
+          </label>
+        </div>
+
+        <!-- Serialized IMEI selector if product tracks IMEI -->
+        <div *ngIf="filteredImeisForSelected.length > 0" style="flex:1.5;min-width:200px">
+          <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+            <span style="color:var(--pri)">Assign In-Stock IMEI</span>
+            <select [(ngModel)]="selectedImei" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);letter-spacing:0.5px">
+              <option value="">— Generic / Bulk Transfer —</option>
+              <option *ngFor="let im of filteredImeisForSelected" [value]="im.imei_number">{{ im.imei_number }}</option>
+            </select>
+          </label>
+        </div>
+
+        <div>
+          <button class="btn" (click)="addToManifest()" style="padding:8px 14px">+ Add to Manifest</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staged Items Manifest Table -->
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h4 style="margin:0;font-size:14px">Staged Manifest Items ({{ manifest.length }} lines, {{ getTotalManifestUnits() }} total units)</h4>
+        <b style="color:var(--pri)">Total Cost: {{ getTotalManifestCost() | currencyLkr }}</b>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Code</th>
+              <th>Item Name</th>
+              <th>Category</th>
+              <th style="text-align:center">Transfer Qty</th>
+              <th>Assigned IMEI</th>
+              <th style="text-align:right">Unit Cost</th>
+              <th style="text-align:right">Subtotal Cost</th>
+              <th style="text-align:center;width:60px">Remove</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of manifest; let idx = index">
+              <td>{{ idx + 1 }}</td>
+              <td><strong style="color:var(--pri)">{{ item.code }}</strong></td>
+              <td><strong>{{ item.name }}</strong></td>
+              <td><span class="bd" style="font-size:11px">{{ item.category }}</span></td>
+              <td style="text-align:center"><b style="font-size:14px">{{ item.qty }}</b></td>
+              <td>
+                <span *ngIf="item.imei" class="bd g" style="letter-spacing:0.5px;font-size:11px">{{ item.imei }}</span>
+                <span *ngIf="!item.imei" class="mut">—</span>
+              </td>
+              <td style="text-align:right" class="mut">{{ item.unit_cost | currencyLkr }}</td>
+              <td style="text-align:right"><strong>{{ (item.qty * item.unit_cost) | currencyLkr }}</strong></td>
+              <td style="text-align:center">
+                <button class="btn red" style="padding:2px 8px;font-size:12px" (click)="removeFromManifest(idx)">✕</button>
+              </td>
+            </tr>
+            <tr *ngIf="manifest.length === 0">
+              <td colspan="9" style="text-align:center;padding:24px" class="mut">No items staged yet. Select an item above and click "+ Add to Manifest".</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Notes & Dispatch Section -->
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+          <span>Transfer Notes / Vehicle / Driver Details:</span>
+          <input type="text" [(ngModel)]="notes" placeholder="e.g. Dispatched via Three-wheeler WP AA-1234 by Kasun" style="padding:8px 12px;border-radius:6px;border:1px solid var(--bd)" />
+        </label>
+      </div>
+
+      <div>
+        <button class="btn" style="padding:10px 24px;font-size:14px;font-weight:bold" (click)="dispatchTransfer()" [disabled]="manifest.length === 0 || isDispatching">
+          {{ isDispatching ? 'Dispatching…' : '🚚 Dispatch & Transfer Goods' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SubTab 2: Transfer History -->
+  <div *ngIf="activeSubTab === 'history'">
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>Transfer Order #</th>
+            <th>Date & Time</th>
+            <th>From Branch</th>
+            <th>To Branch</th>
+            <th style="text-align:center">Total Units</th>
+            <th>Items Included</th>
+            <th>Dispatched By</th>
+            <th>Status</th>
+            <th style="text-align:right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tr of transferHistory">
+            <td><strong style="color:var(--pri)">{{ tr.transfer_no }}</strong></td>
+            <td class="mut">{{ tr.created_at | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td><b>{{ tr.from_location_name || tr.from_location }}</b></td>
+            <td><b>{{ tr.to_location_name || tr.to_location }}</b></td>
+            <td style="text-align:center"><b style="font-size:14px">{{ tr.total_qty }}</b></td>
+            <td>
+              <span style="font-size:12px">
+                {{ tr.items?.length || 0 }} SKU(s)
+              </span>
+            </td>
+            <td class="mut">{{ tr.created_by || 'Admin' }}</td>
+            <td>
+              <span class="bd g" style="font-size:11px">Completed</span>
+            </td>
+            <td style="text-align:right">
+              <button class="btn alt" style="padding:4px 10px;font-size:12px" (click)="openSlipModal(tr)">📄 View Slip</button>
+            </td>
+          </tr>
+          <tr *ngIf="transferHistory.length === 0">
+            <td colspan="9" style="text-align:center;padding:24px" class="mut">No transfer records found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Printable Transfer Note Slip Modal -->
+<div class="dlg-backdrop" *ngIf="showSlipModal" (click)="closeSlipModal()">
+  <div class="dlg-box card print-section" (click)="$event.stopPropagation()" style="max-width:560px;width:95%;padding:24px">
+    <!-- Header -->
+    <div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:12px;margin-bottom:14px">
+      <h3 style="margin:0 0 2px;letter-spacing:1px">SILVERLINE SUPER AND MOBILE</h3>
+      <div style="font-size:12px">Kandy Rd, Mawathagama · Tel: 037-2221101</div>
+      <h4 style="margin:8px 0 0;font-size:14px;text-transform:uppercase;letter-spacing:0.5px">TRANSFER OF GOODS NOTE (TOG)</h4>
+    </div>
+
+    <!-- Meta Info -->
+    <div *ngIf="activeSlip" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
+      <div>Transfer #: <b>{{ activeSlip.transfer_no }}</b></div>
+      <div style="text-align:right">Date: <b>{{ activeSlip.created_at | date:'yyyy-MM-dd HH:mm' }}</b></div>
+      <div>From: <b>{{ activeSlip.from_location_name || activeSlip.from_location }}</b></div>
+      <div style="text-align:right">To: <b>{{ activeSlip.to_location_name || activeSlip.to_location }}</b></div>
+      <div style="grid-column:1 / -1">Notes / Driver: <i>{{ activeSlip.notes || 'Direct branch transfer' }}</i></div>
+    </div>
+
+    <!-- Item Table -->
+    <div class="tw" *ngIf="activeSlip" style="margin-bottom:14px">
+      <table style="font-size:12px">
+        <thead>
+          <tr style="border-bottom:1px solid #000">
+            <th>Code</th>
+            <th>Item Description</th>
+            <th>Serial / IMEI</th>
+            <th style="text-align:right">Qty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let itm of activeSlip.items" style="border-bottom:1px dotted #ccc">
+            <td>{{ itm.code }}</td>
+            <td><strong>{{ itm.name }}</strong></td>
+            <td>{{ itm.imei || '—' }}</td>
+            <td style="text-align:right"><b>{{ itm.qty }}</b></td>
+          </tr>
+          <tr style="border-top:2px solid #000;font-weight:bold">
+            <td colspan="3">TOTAL UNITS TRANSFERRED:</td>
+            <td style="text-align:right">{{ activeSlip.total_qty }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Signatures -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;font-size:11px;margin-top:24px;border-top:1px dashed #aaa;padding-top:16px">
+      <div>
+        <div style="border-bottom:1px solid #000;height:24px;margin-bottom:4px"></div>
+        <div>Dispatched By</div>
+      </div>
+      <div>
+        <div style="border-bottom:1px solid #000;height:24px;margin-bottom:4px"></div>
+        <div>Carrier / Driver</div>
+      </div>
+      <div>
+        <div style="border-bottom:1px solid #000;height:24px;margin-bottom:4px"></div>
+        <div>Received By (Branch)</div>
+      </div>
+    </div>
+
+    <!-- Actions (Hidden in print) -->
+    <div class="no-print dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn alt" (click)="closeSlipModal()">Close</button>
+      <button class="btn" (click)="printSlip()">🖨 Print Slip</button>
+    </div>
+  </div>
+</div>

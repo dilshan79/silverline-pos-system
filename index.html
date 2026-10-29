@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Silverline POS – Full System UI & API</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--pri:#1F4D45;--acc:#F59E0B;--ok:#16A34A;--bad:#DC2626;--info:#2563EB;--bg:#F3F5F4;--card:#fff;--tx:#14201d;--mut:#6b7a76;--bd:#dfe6e3;--side:#173a34}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1715;--card:#18231f;--tx:#e6eeeb;--mut:#93a39e;--bd:#2a3a35;--side:#0b1210}}
+:root[data-theme="dark"]{--bg:#0f1715;--card:#18231f;--tx:#e6eeeb;--mut:#93a39e;--bd:#2a3a35;--side:#0b1210}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 Inter,system-ui,Segoe UI,Arial,sans-serif}
+.app{display:flex;min-height:100vh}
+nav{width:210px;background:var(--side);color:#cfe0db;padding:12px 8px;flex-shrink:0;overflow-y:auto;max-height:100vh;position:sticky;top:0}
+nav h1{font-size:15px;color:#fff;margin:4px 8px 10px}
+nav small{display:block;margin:10px 8px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.55}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;padding:9px 12px;border-radius:8px;font:inherit;cursor:pointer;min-height:38px}
+nav button.on{background:var(--pri);color:#fff}
+main{flex:1;padding:16px;min-width:0}
+h2{margin:0;font-size:20px}.hd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px}
+.grid{display:grid;gap:12px}.kpi{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.kpi b{display:block;font-size:20px;margin-top:2px}.mut{color:var(--mut);font-size:13px}
+.btn{border:0;border-radius:10px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer;min-height:40px;background:var(--pri);color:#fff}
+.btn.alt{background:var(--bd);color:var(--tx)}.btn.acc{background:var(--acc);color:#111}.btn.red{background:var(--bad)}
+.tw{overflow-x:auto;margin-top:8px}table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--mut);font-weight:600;padding:8px;border-bottom:2px solid var(--bd);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.bd{font-size:11px;padding:2px 9px;border-radius:99px;color:#fff;font-weight:600}
+.bd.g{background:var(--ok)}.bd.r{background:var(--bad)}.bd.b{background:var(--info)}.bd.y{background:var(--acc);color:#111}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:8px}
+label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+input,select,textarea{padding:9px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;min-height:40px}
+.ck{flex-direction:row;align-items:center;gap:8px}.ck input{min-height:0}.sr{min-width:220px}
+.two{display:grid;grid-template-columns:1fr 340px;gap:12px}
+.chip{padding:7px 14px;border-radius:99px;background:var(--bd);cursor:pointer;border:0;color:var(--tx);font:inherit}.chip.on{background:var(--pri);color:#fff}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.prod{grid-template-columns:repeat(auto-fill,minmax(125px,1fr))}.p{cursor:pointer;text-align:center}
+.p i{display:block;height:54px;border-radius:8px;background:linear-gradient(135deg,var(--bd),transparent);margin-bottom:6px}
+.line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);gap:8px}
+.total{font-size:24px;font-weight:700;display:flex;justify-content:space-between;margin:10px 0}
+.board{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:12px;overflow-x:auto}
+.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:0 0 8px}
+.job{margin-bottom:10px;border-left:4px solid var(--info)}.job.wait{border-color:var(--bad)}.job.done{border-color:var(--ok)}
+.phone{width:300px;max-width:100%;margin:0 auto;border:8px solid #222;border-radius:32px;background:var(--card);padding:14px}
+.chk{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd);cursor:pointer;min-height:40px}
+.chk span{width:22px;height:22px;border-radius:6px;border:2px solid var(--mut);display:grid;place-items:center}
+.chk.on span{background:var(--ok);border-color:var(--ok);color:#fff}
+.steps{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}.steps span{flex:1;min-width:80px;text-align:center;padding:6px;border-radius:6px;background:var(--bd);font-size:12px}.steps .d{background:var(--ok);color:#fff}.steps .n{background:var(--acc);color:#111}
+.bars{display:flex;align-items:flex-end;gap:8px;height:110px;margin-bottom:22px}.bars div{flex:1;background:var(--pri);border-radius:6px 6px 0 0;position:relative}.bars small{position:absolute;bottom:-18px;left:0;right:0;text-align:center;color:var(--mut);font-size:11px}
+.login{max-width:360px;margin:8vh auto}
+.posbar{display:flex;gap:18px;flex-wrap:wrap;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;align-items:center;font-size:13px}
+.posbar b{display:block;font-size:14px}
+.fbar{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.fb{background:var(--bd);border:0;border-radius:8px;padding:10px 6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;min-height:40px;color:var(--tx)}
+.fb:active{background:var(--pri);color:#fff}
+.status-pill{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:bold;display:inline-block;}
+.status-online{background:#dcfce7;color:#15803d;}
+.status-offline{background:#fee2e2;color:#b91c1c;}
+@media (max-width:860px){.app{flex-direction:column}nav{width:100%;max-height:none;position:static;display:flex;overflow-x:auto;padding:6px}nav h1,nav small{display:none}nav button{white-space:nowrap;width:auto}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app"><nav id="nav"></nav><main id="m"></main></div>
+<script>
+const B=t=>{const m=/^#([grby]):(.*)/.exec(t);return m?`<span class="bd ${m[1]}">${m[2]}</span>`:t};
+const T=(c,r)=>`<div class="tw"><table><tr>${c.map(x=>`<th>${x}</th>`).join('')}</tr>${r.map(x=>`<tr>${x.map(y=>`<td>${B(y)}</td>`).join('')}</tr>`).join('')}</table></div>`;
+const F=a=>`<div class="fg">${a.map(x=>{const[l,t]=x.split('|');let i='<input>';if(t){if(t=='area')i='<textarea rows=2></textarea>';else if(t=='chk')return`<label class="ck"><input type=checkbox> ${l}</label>`;else i=`<select>${t.split(',').map(o=>`<option>${o}</option>`).join('')}</select>`}return`<label>${l}${i}</label>`}).join('')}</div>`;
+const H=(t,b=[])=>`<div class="hd"><h2>${t}</h2><div>${b.map(x=>`<button class="btn ${x[1]||''}">${x[0]}</button>`).join(' ')}</div></div>`;
+const K=a=>`<div class="grid kpi">${a.map(x=>`<div class="card"><span class="mut">${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>`;
+const C=(t,b)=>`<div class="card" style="margin-top:12px">${t?`<b>${t}</b>`:''}${b}</div>`;
+const SR=p=>`<input class="sr" placeholder="${p||'Search…'}">`;
+const ST=(a,n)=>`<div class="steps">${a.map((x,i)=>`<span class="${i<n?'d':i==n?'n':''}">${x}</span>`).join('')}</div>`;
+const flt=(...o)=>`<div style="display:flex;gap:8px;flex-wrap:wrap">${SR()}${o.map(x=>`<select><option>${x}</option></select>`).join('')}</div>`;
+
+let items=[
+  ["Samsung A03s 64GB",72900,6,"101005"],
+  ["Samsung M02 32GB",31900,0,"101003"],
+  ["Redmi 12 128GB",58500,2,"101004"],
+  ["7W LED Bulb",250,40,"101002"],
+  ["Fast Charger",1800,12,"101006"],
+  ["Back Cover",600,30,"101007"],
+  ["CCTV 4-cam Install",35000,99,"100102"],
+  ["Dialog TV Install",4500,99,"100101"]
+];
+
+let cart={};
+let backendOnline = false;
+
+// Fetch live backend data if PHP is available
+async function syncWithBackend() {
+  try {
+    const res = await fetch('api.php?action=get_items');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'success' && data.data.length > 0) {
+        items = data.data.map(item => [item.name, parseFloat(item.price), parseInt(item.stock), item.code]);
+        backendOnline = true;
+      }
+    }
+  } catch (e) {
+    backendOnline = false;
+  }
+}
+syncWithBackend();
+
+const S={
+login:['Login','',()=>`<div class="login card"><h2>Silverline POS</h2><p class="mut">Sign in to continue</p>${F(['Username','Password','Location|Fair Road (SH),Bravo Bus Stand (MW),Super & Mobile (SS)'])}<button class="btn" style="width:100%;margin-top:12px">Sign in</button><p class="mut">2FA code for owner accounts · forgot password</p></div>`],
+dash:['Dashboard','Main',()=>H('Owner dashboard',[['Today','alt'],['All locations','alt']])+`<div style="margin-bottom:10px"><span class="status-pill ${backendOnline?'status-online':'status-offline'}">Backend Connection: ${backendOnline?'ONLINE (PHP SQLite Live)':'DEMO MODE (Static Standalone)'}</span></div>`+K([["Today's sales","Rs 412,500"],["Cash in hand","Rs 186,200"],["Gross profit","Rs 68,400"],["Jobs in pool","4"],["Low stock","7"],["Cheques due","3"]])+`<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:12px"><div class="card"><b>Sales – 7 days</b><div class="bars" style="margin-top:14px"><div style="height:50%"><small>Mon</small></div><div style="height:70%"><small>Tue</small></div><div style="height:45%"><small>Wed</small></div><div style="height:85%"><small>Thu</small></div><div style="height:60%"><small>Fri</small></div><div style="height:100%"><small>Sat</small></div><div style="height:75%"><small>Sun</small></div></div></div><div class="card"><b>Needs attention</b><div class="line"><span>J-0231 waiting 3h</span>#r:SLA</div><div class="line"><span>Samsung A03s – 2 left</span>#y:Low</div><div class="line"><span>BOC cheque due tomorrow</span>#b:Rs 85,000</div><div class="line"><span>Warranty claims open</span>#b:2</div></div><div class="card"><b>By location</b>${T(['Location','Sales'],[['Fair Road','182,000'],['Bravo Bus Stand','141,500'],['Super & Mobile','89,000']])}</div></div>`],
+pos:['POS / Billing','Main',()=>`
+<div class="posbar">
+  <div><span class="mut">Terminal</span><b>#1</b></div>
+  <div><span class="mut">Location</span><b>MW – Bravo Bus Stand</b></div>
+  <div><span class="mut">Cashier</span><b>Rashmika</b></div>
+  <div><span class="mut">Salesman</span><select><option>N/D</option><option>Kasun</option></select></div>
+  <div><span class="mut">Invoice No</span><b>INMW1000014</b></div>
+  <div><span class="mut">Customer</span><select><option>Cash Customer</option><option>+ Add / Search</option></select></div>
+  <div style="margin-left:auto"><span class="mut" id="clk">${new Date().toISOString().replace('T',' ').substring(0,19)}</span></div>
+</div>
+
+<div class="two" style="margin-top:10px">
+<div>
+ <input style="width:100%" placeholder="Scan barcode / IMEI / PLU or search item…">
+ <div class="tabs">
+   <button class="chip on">Phones</button><button class="chip">Accessories</button>
+   <button class="chip">Bill Payments</button><button class="chip">Dialog TV Services</button>
+   <button class="chip">Reload / Cards</button><button class="chip">Repairs</button>
+ </div>
+ <div class="grid prod">${items.map((p,i)=>`<div class="card p" onclick="add(${i})"><i></i><div>${p[0]}</div><b>${p[1].toLocaleString()}</b><br><span class="bd ${p[2]<3?'r':'g'}">${p[2]<3?'Low '+p[2]:'In stock'}</span></div>`).join('')}
+   <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Light Bill</div><b>Express</b></div>
+   <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Water Bill</div><b>Express</b></div>
+   <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Thoga Card</div><b>Express</b></div>
+   <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Dialog 4G Antenna Fix</div><b>Service</b></div>
+ </div>
+
+ <b style="display:block;margin:14px 0 6px">Functions</b>
+ <div class="fbar">
+   <button class="fb">Suspend</button><button class="fb">Recall</button><button class="fb">Void</button>
+   <button class="fb">Return</button><button class="fb">No Sale</button><button class="fb">Discount</button>
+   <button class="fb">Discount Type</button><button class="fb">New Price</button><button class="fb">Copy Line</button>
+   <button class="fb">Remove</button><button class="fb">Seek</button><button class="fb">Float Cash</button>
+   <button class="fb">Paid In</button><button class="fb">Paid Out</button><button class="fb">Print On</button>
+ </div>
+</div>
+
+<div class="card">
+ <div style="display:flex;justify-content:space-between"><b>Bill</b><span class="mut">Order No ORMW1000001</span></div>
+ <div id="cart" style="min-height:90px;margin-top:6px"></div>
+ <div class="line"><span>Sub total</span><span id="tot">0.00</span></div>
+ <div class="line"><span>Discount</span><span>0.00</span></div>
+ <div class="total"><span>Net value</span><span id="net_tot">0.00</span></div>
+
+ <div class="fg" style="grid-template-columns:1fr 1fr;margin:4px 0 10px">
+   <label>Tendered<input id="tend" value="0.00" oninput="calcBal()"></label>
+   <label>Balance<input id="bal" value="0.00" disabled></label>
+ </div>
+
+ <b class="mut">Pay with</b>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">
+   <button class="btn alt" style="flex:1">Cash</button>
+   <button class="btn alt" style="flex:1">Cheque</button>
+   <button class="btn alt" style="flex:1">Credit</button>
+   <button class="btn alt" style="flex:1">Split</button>
+ </div>
+ <div style="display:flex;gap:6px;margin-bottom:10px">
+   <button class="btn alt" style="flex:1">💳 Visa</button>
+   <button class="btn alt" style="flex:1">💳 MasterCard</button>
+   <button class="btn alt" style="flex:1">💳 Amex</button>
+ </div>
+ <div style="display:flex;gap:6px;margin-bottom:10px">
+   <button class="btn alt" style="flex:1">🎁 Gift Voucher</button>
+   <button class="btn alt" style="flex:1">⭐ Loyalty</button>
+   <button class="btn alt" style="flex:1">Credit Note</button>
+ </div>
+ <button class="btn acc" style="width:100%" onclick="checkout()">CHARGE / CASH</button>
+ <div style="display:flex;gap:6px;margin-top:10px">
+   <button class="btn red" style="flex:1" onclick="cart={};draw()">Cancel</button>
+   <button class="btn alt" style="flex:1">Log Off</button>
+ </div>
+ <p class="mut" style="text-align:center;margin-top:10px">🖨 Slip printer: ON &nbsp;·&nbsp; 🌐 LAN &nbsp;·&nbsp; EN / SIN</p>
+</div>
+</div>`],
+returns:['Returns / Exchange','Main',()=>H('Return / exchange',[['Process return','acc']])+F(['Find by invoice / IMEI / phone','Type|Customer return,Exchange,Warranty claim,Supplier RMA','Reason|Faulty,Wrong item,Changed mind','Refund method|Cash,Card,Credit note'])+C('Original sale',T(['Invoice','Date','Item','IMEI','Price','Warranty'],[['INV-1042','2026-09-10','Samsung A03s 64GB','35691…8821','72,900','#g:11 months left']]))+C('',`<p class="mut">Return restocks the IMEI (or sends it to RMA), reverses payment and posts a credit note.</p>`)],
+items:['Items','Inventory',()=>H('Items',[['+ New item'],['Import CSV','alt']])+flt('All categories','All brands','All status')+T(['Code','Name','Category','Cost','Price','Stock','IMEI','Status'],items.map(i=>[i[3]||'101000',i[0],'General','0.00',i[1].toLocaleString(),i[2].toString(),'No','#g:Active']))+C('Item form',F(['Code','Name','Category|Phones,Accessories,Services,Reload','Brand','Cost','Price','Track IMEI|chk','Warranty (months)','Reorder level','Variants (color/storage)|area']))],
+stock:['Stock & IMEI','Inventory',()=>H('Stock by location')+flt('All locations','All categories')+T(['Item','SH','MW','SS','Total','Value'],[['Samsung A03s','6','2','1','9','656,100'],['Redmi 12','2','3','0','5','292,500'],['Fast Charger','12','8','6','26','46,800']])+C('IMEI lookup',F(['Scan IMEI'])+T(['IMEI','Item','Location','Status','History'],[['35691…8821','Samsung A03s','SH','#b:Sold','GRN-221 → INV-1042 → RTN-9'],['35691…7710','Samsung A03s','MW','#g:In stock','GRN-221']]))],
+tog:['Transfer / Count','Inventory',()=>H('Transfer of goods',[['Post','acc']])+F(['From|Fair Road,Bravo Bus Stand,Super & Mobile','To|Bravo Bus Stand,Fair Road,Technician van','Scan item / IMEI'])+T(['Item','IMEI','Qty'],[['Samsung A03s','35691…7710','1']])+C('Stock count',F(['Location','Count date'])+T(['Item','System','Counted','Variance'],[['Samsung A03s','6','6','0'],['Fast Charger','12','11','#r:-1']]))],
+po:['Purchase Order','Purchasing',()=>H('Purchase orders',[['+ New PO']])+flt('All suppliers','All status')+T(['PO No','Supplier','Date','Total','Status'],[['PO-0091','Singer','2026-09-15','450,000','#y:Sent'],['PO-0090','Mobil King','2026-09-12','210,000','#g:Received']])+C('New PO',F(['Supplier','Location','Expected date'])+T(['Item','Qty','Cost'],[['Redmi 12','10','58,500']]))],
+grn:['GRN (Goods in)','Purchasing',()=>H('Goods received note',[['Save & post','acc']])+F(['Supplier','PO No','Invoice No','Date'])+C('Scan IMEIs in',F(['Scan IMEI'])+T(['Item','Ordered','IMEIs scanned'],[['Redmi 12','10','#y:7 / 10']]))+C('',`<span class="mut">Cost changes update the item cost and post to the supplier account.</span>`)],
+ledger:['Ledgers','Accounts',()=>H('Customer / supplier ledger')+F(['Account|Customer,Supplier,Bank','Name','From','To'])+T(['Date','Doc','Debit','Credit','Balance'],[['09-01','INV-1001','12,000','','12,000'],['09-05','RCT-0330','','5,000','7,000']])],
+ar:['AR / AP Aging','Accounts',()=>H('Receivable aging',[['Export','alt']])+F(['Type|Receivable,Payable','As at date'])+T(['Account','0-15','16-30','31-45','45+','Total'],[['Mr Hemal','5,000','0','0','0','5,000'],['Mr Asiri','0','12,000','8,000','#r:20,000','40,000']])],
+voucher:['Voucher / Receipt','Accounts',()=>H('Payment voucher / receipt',[['Save','alt'],['Post','acc']])+F(['Type|Voucher,Receipt,Credit note,Debit note','Account','Date','Method|Cash,Cheque,Card,Bank'])+T(['Doc','Date','Outstanding','Paid'],[['PCH-0021','09-01','28,950','28,950']])],
+cheque:['Cheques','Accounts',()=>H('Cheque management',[['+ Register cheque']])+ST(['Received','Deposited','Cleared'],1)+T(['Cheque','Bank','Date','Amount','Status'],[['887120','BOC','09-29','85,000','#y:Due soon'],['554311','Sampath','09-20','40,000','#g:Cleared'],['110022','NSB','09-10','12,000','#r:Returned']])+C('Bank reconcile',`<span class="mut">Tick cleared entries against the bank statement, then confirm the difference is 0.</span>`)],
+pool:['Job Pool','Service',()=>H('Job pool – dispatch',[['+ New job','acc'],['Map view','alt']])+`<div class="board"><div class="col"><h3>Pool</h3><div id="c-pool"><div class="card job wait"><b>#J-0231 Dialog TV</b><div class="mut">Badulla · Tue · waiting 3h</div><div style="margin-top:8px"><select><option>Kasun</option><option>Nimal</option></select> <button class="btn" onclick="asg(this)">Assign</button></div></div><div class="card job wait"><b>#J-0232 CCTV 4 cam</b><div class="mut">Bandarawela · Wed · 1h</div><div style="margin-top:8px"><select><option>Kasun</option><option>Nimal</option></select> <button class="btn" onclick="asg(this)">Assign</button></div></div></div></div><div class="col"><h3>Assigned</h3><div id="c-asg"><div class="card job"><b>#J-0228 CCTV</b><div class="mut">Kasun · 2 pm</div></div></div></div><div class="col"><h3>In progress</h3><div class="card job"><b>#J-0225 4G antenna</b><div class="mut">Nimal · 3 photos</div></div></div><div class="col"><h3>Completed</h3><div class="card job done"><b>#J-0220 Dialog TV</b><div class="mut">Signed · Rs 4,500</div></div></div></div>`],
+newjob:['New Job','Service',()=>H('Create installation job',[['Save to pool','acc']])+F(['Customer','Phone','Service|Dialog TV,4G antenna,CCTV','Package|Basic,Standard,Premium','Address|area','GPS pin','Preferred date','Preferred time','Advance payment','Notes|area'])+C('Materials estimate',T(['Item','Qty','Price'],[['Set-top box','1','8,500'],['Cable (m)','20','1,000']]))+C('Job timeline',ST(['New','Assigned','On the way','In progress','Completed','Closed'],0))],
+tech:['Technician App','Service',()=>H('Technician app (mobile)')+`<div class="phone"><b>J-0231 · Dialog TV</b><div class="mut">📞 Call · 📍 Navigate</div><div class="mut" style="margin-top:8px">Materials</div><div class="line"><span>Set-top box</span><span class="mut">SN 88213</span></div><div class="mut" style="margin-top:8px">Checklist</div><div id="chk">${["Signal check","Box activated","Channels OK","Remote handed over"].map(t=>`<div class="chk" onclick="this.classList.toggle('on');this.firstChild.textContent=this.classList.contains('on')?'✓':''"><span></span>${t}</div>`).join('')}</div><div style="display:flex;gap:6px;margin:10px 0"><button class="btn alt" style="flex:1">📷 Before</button><button class="btn alt" style="flex:1">📷 After</button></div><button class="btn acc" style="width:100%">Signature / OTP → Complete</button><p class="mut">Van stock · My commission · Today's jobs (tabs)</p></div>`],
+repair:['Repairs','Service',()=>H('Repair job card',[['Save'],['Print','alt']])+F(['Job no','Customer','Phone','Device / IMEI','Fault|area','Accessories|Charger,Battery,SIM,Memory card','With warranty|chk','Invoice no','Estimate','Advance','Due date','Status|Received,Diagnosing,Waiting parts,Ready,Delivered'])+C('Parts used',T(['Part','Qty','Cost','Price'],[['Screen A03s','1','4,500','7,500']]))],
+cust:['Customers','Customers',()=>H('Customers',[['+ New customer']])+flt('All types')+T(['Phone','Name','Type','Balance','Loyalty'],[['0702256233','Mr Acman','Retail','0','Silver'],['0703885240','Mr Gamage','Credit','12,500','Gold']])+C('Customer 360',`<span class="mut">Tabs: Profile · Purchases & warranty · Jobs · Account statement · Loyalty points</span>`)],
+loyalty:['Loyalty & Vouchers','Customers',()=>H('Loyalty card')+F(['Card no','Customer','Card type|Silver,Gold','Benefit|Points,Discount','Credit limit','Locked|chk'])+C('Gift vouchers',T(['Code','Amount','Status'],[['GV-001','5,000','#g:On hand'],['GV-002','2,000','#b:Redeemed']]))],
+reports:['Reports','Reports',()=>H('Reports',[['Export Excel','alt'],['PDF','alt']])+`<div class="tabs">${['Sales','Purchase','Stock balance','Stock valuation','Gross profit','Movement','AR / AP','Collection','Installation jobs','Repairs'].map((x,i)=>`<button class="chip ${i?'':'on'}">${x}</button>`).join('')}</div>`+F(['From','To','Location|All,Fair Road,Bravo Bus Stand,Super & Mobile','Group by|Item,Category,Brand,Supplier,Customer,Salesman,Technician','Summary only|chk'])+T(['Item','Qty','Sales','Cost','Profit'],[['Samsung A03s','8','583,200','547,200','36,000'],['Fast Charger','20','36,000','24,000','12,000']])+C('',`<span class="mut">One report screen with a Group-by filter replaces the ~80 old report forms.</span>`)],
+users:['Users & Roles','Admin',()=>H('Users & roles',[['+ New user']])+T(['User','Role','Locations','2FA','Status'],[['Kasun','Technician','Van 1','No','#g:Active'],['Rashmika','Cashier','SH','No','#g:Active'],['Dilshan','Owner','All','Yes','#g:Active']])+C('Permissions',T(['Screen','View','Edit','Delete','Discount limit'],[['POS','✔','✔','','5%'],['Reports','✔','','','']]))],
+settings:['Settings','Admin',()=>H('Settings')+F(['Block negative stock|chk','Discount limit (%)','Receipt footer','Warranty default (months)','Job SLA (hours)','SMS / WhatsApp gateway','Theme|Auto,Light,Dark'])+C('Service types',T(['Service','Base price','Checklist'],[['Dialog TV','4,500','4 items'],['4G antenna','5,500','4 items'],['CCTV','12,000','5 items']]))+C('Audit log',T(['Time','User','Action'],[['10:02','Rashmika','Price override INV-1042'],['09:40','Dilshan','Stock adjustment ADJ-7']]))]
+};
+
+function add(i){cart[i]=(cart[i]||0)+1;draw()}
+function draw(){
+  const c=document.getElementById('cart');
+  if(!c)return;
+  let t=0,h='';
+  for(const i in cart){
+    const a=items[i][1]*cart[i];
+    t+=a;
+    h+=`<div class="line"><span>${items[i][0]} ×${cart[i]}</span><span>${a.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>`
+  }
+  c.innerHTML=h||'<p class="mut">Tap a product to add it.</p>';
+  const formattedTot = t.toLocaleString('en-US',{minimumFractionDigits:2});
+  const subEl = document.getElementById('tot');
+  const netEl = document.getElementById('net_tot');
+  if(subEl) subEl.textContent=formattedTot;
+  if(netEl) netEl.textContent=formattedTot;
+  calcBal();
+}
+function calcBal() {
+  const tendEl = document.getElementById('tend');
+  const balEl = document.getElementById('bal');
+  const netEl = document.getElementById('net_tot');
+  if(!tendEl || !balEl || !netEl) return;
+  const net = parseFloat(netEl.textContent.replace(/,/g,'')) || 0;
+  const tend = parseFloat(tendEl.value) || 0;
+  const bal = tend - net;
+  balEl.value = bal.toLocaleString('en-US',{minimumFractionDigits:2});
+}
+async function checkout() {
+  const itemsInCart = [];
+  let totalAmt = 0;
+  for(const i in cart) {
+    itemsInCart.push({
+      code: items[i][3] || '101000',
+      name: items[i][0],
+      qty: cart[i],
+      price: items[i][1]
+    });
+    totalAmt += items[i][1] * cart[i];
+  }
+  if (itemsInCart.length === 0) {
+    alert("Cart is empty!");
+    return;
+  }
+  
+  const tend = parseFloat(document.getElementById('tend').value) || totalAmt;
+  
+  if (backendOnline) {
+    try {
+      const res = await fetch('api.php?action=create_sale', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          items: itemsInCart,
+          total: totalAmt,
+          tendered: tend,
+          payment_method: 'Cash'
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        alert("Transaction completed successfully! Invoice: " + data.invoice_no);
+        cart = {};
+        syncWithBackend();
+        draw();
+        return;
+      }
+    } catch(e) {
+      console.log(e);
+    }
+  }
+  
+  alert("Transaction recorded (Demo Mode)! Total: Rs " + totalAmt.toLocaleString());
+  cart = {};
+  draw();
+}
+function asg(b){const c=b.closest('.job'),n=c.querySelector('select').value;c.classList.remove('wait');c.querySelector('div:last-child').outerHTML=`<div class="mut">${n} · notified</div>`;document.getElementById('c-asg').appendChild(c)}
+function show(id){document.getElementById('m').innerHTML=S[id][2]();draw();document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.s==id))}
+let g='',h='<h1>Silverline POS</h1>';for(const k in S){if(S[k][1]!==g){g=S[k][1];if(g)h+=`<small>${g}</small>`}h+=`<button data-s="${k}">${S[k][0]}</button>`}
+document.getElementById('nav').innerHTML=h;document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>show(b.dataset.s));show('dash');
+</script></body></html>

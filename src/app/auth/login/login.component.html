@@ -1,0 +1,55 @@
+<div style="min-height:100vh;display:grid;place-items:center;background:var(--bg)">
+  <div class="login card" style="width:100%;max-width:380px;padding:32px">
+
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:40px;margin-bottom:8px">🏪</div>
+      <h2 style="margin:0;font-size:22px;color:var(--pri)">Silverline POS</h2>
+      <p class="mut" style="margin:6px 0 0">Sign in to continue</p>
+    </div>
+
+    <div *ngIf="errorMsg" style="background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px">
+      ⚠ {{ errorMsg }}
+    </div>
+
+    <div class="fg" style="grid-template-columns:1fr">
+      <label>Username
+        <input [(ngModel)]="username" type="text" placeholder="Enter username"
+               (keydown)="onEnter($event)" style="width:100%">
+      </label>
+      <label>Password
+        <input [(ngModel)]="password" type="password" placeholder="••••••••"
+               (keydown)="onEnter($event)" style="width:100%">
+      </label>
+      <label>Location
+        <select [(ngModel)]="location" style="width:100%">
+          <option *ngFor="let loc of locations" [value]="loc.code">{{ loc.name }}</option>
+        </select>
+      </label>
+    </div>
+
+    <button class="btn" style="width:100%;margin-top:18px" (click)="login()" [disabled]="loading">
+      {{ loading ? 'Signing in…' : 'Sign In' }}
+    </button>
+
+    <div style="margin-top:20px;border-top:1px solid var(--bd);padding-top:14px">
+      <p class="mut" style="font-size:12px;margin:0 0 8px"><strong>Quick Demo Accounts (Click to Fill):</strong></p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+        <button type="button" class="chip" (click)="fillDemo('cashier', 'cashier123')" style="cursor:pointer;font-size:12px">
+          🧾 Cashier (cashier)
+        </button>
+        <button type="button" class="chip" (click)="fillDemo('admin', 'admin123')" style="cursor:pointer;font-size:12px">
+          👑 Admin (admin)
+        </button>
+        <button type="button" class="chip" (click)="fillDemo('owner', 'owner123')" style="cursor:pointer;font-size:12px">
+          🏢 Owner (owner)
+        </button>
+      </div>
+      <div style="font-size:11px;color:var(--mut);display:grid;gap:3px">
+        <div>🧾 <strong>Cashier</strong> — Direct to POS register & Float Cash</div>
+        <div>🏢 <strong>Admin / Owner</strong> — Dashboard, sales, inventory & all reports</div>
+        <div>👑 <strong>Super Admin</strong> — System user & role management</div>
+      </div>
+    </div>
+
+  </div>
+</div>

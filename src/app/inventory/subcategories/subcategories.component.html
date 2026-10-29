@@ -1,0 +1,93 @@
+<div class="card">
+  <div class="hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <div>
+      <h3 style="margin:0 0 4px">Subcategory Master</h3>
+      <p class="mut" style="margin:0;font-size:13px">Define subcategories grouped under parent categories for organized cataloging</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select [(ngModel)]="selectedCategoryFilter" (change)="onCategoryFilterChange()" style="padding:8px 12px;border-radius:6px;border:1px solid var(--bd)">
+        <option value="All">All Categories</option>
+        <option *ngFor="let cat of categories" [value]="cat.name">{{ cat.name }}</option>
+      </select>
+      <input type="text" [(ngModel)]="searchTerm" (input)="applyFilter()" placeholder="Search subcategory…" style="min-width:200px;padding:8px 12px">
+      <button class="btn" (click)="openCreate()">+ Add Subcategory</button>
+    </div>
+  </div>
+
+  <div *ngIf="successMsg" class="alert-success" style="padding:10px 14px;background:#e6f4ea;color:#137333;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✓ {{ successMsg }}
+  </div>
+
+  <div *ngIf="errorMsg" class="alert-danger" style="padding:10px 14px;background:#fce8e6;color:#c5221f;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✕ {{ errorMsg }}
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px">#</th>
+          <th>Parent Category</th>
+          <th>Subcategory Name</th>
+          <th>Description</th>
+          <th style="text-align:center">Items Assigned</th>
+          <th style="text-align:right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let sc of filteredSubcategories; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>
+            <span class="bd g" style="font-weight:600">{{ sc.category_name }}</span>
+          </td>
+          <td>
+            <strong>{{ sc.name }}</strong>
+          </td>
+          <td class="mut">{{ sc.description || '—' }}</td>
+          <td style="text-align:center">
+            <span class="bd" [class.g]="(sc.item_count || 0) > 0">{{ sc.item_count || 0 }} items</span>
+          </td>
+          <td style="text-align:right">
+            <button class="btn alt" style="margin-right:6px;padding:4px 10px;font-size:12px" (click)="openEdit(sc)">Edit</button>
+            <button class="btn red" style="padding:4px 10px;font-size:12px" (click)="deleteSubcategory(sc)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredSubcategories.length === 0 && !loading">
+          <td colspan="6" style="text-align:center;padding:24px" class="mut">No subcategories found.</td>
+        </tr>
+        <tr *ngIf="loading">
+          <td colspan="6" style="text-align:center;padding:24px" class="mut">Loading subcategories…</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Subcategory Modal -->
+<div class="dlg-backdrop" *ngIf="showModal" (click)="closeModal()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()" style="max-width:440px">
+    <h3>{{ editingSubcategory.id ? 'Edit Subcategory' : 'New Subcategory' }}</h3>
+    <div class="fg" style="display:flex;flex-direction:column;gap:12px;margin:16px 0">
+      <label>
+        Parent Category *
+        <select [(ngModel)]="editingSubcategory.category_name" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+          <option *ngFor="let c of categories" [value]="c.name">{{ c.name }}</option>
+        </select>
+      </label>
+      <label>
+        Subcategory Name *
+        <input type="text" [(ngModel)]="editingSubcategory.name" placeholder="e.g. Chargers & Cables, Smartphones" autofocus />
+      </label>
+      <label>
+        Description
+        <textarea [(ngModel)]="editingSubcategory.description" rows="3" placeholder="Notes or specifications for this subcategory" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--bd)"></textarea>
+      </label>
+    </div>
+    <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn alt" (click)="closeModal()" [disabled]="isSaving">Cancel</button>
+      <button class="btn" (click)="saveSubcategory()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving…' : 'Save Subcategory' }}
+      </button>
+    </div>
+  </div>
+</div>

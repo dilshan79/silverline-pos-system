@@ -1,0 +1,25 @@
+<div class="card">
+  <h3>Purchase Returns to Vendor</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Return No</th>
+          <th>Supplier</th>
+          <th>GRN Ref</th>
+          <th>Reason</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pr of returns">
+          <td>{{ pr.returnNo }}</td>
+          <td>{{ pr.supplier }}</td>
+          <td>{{ pr.grnNo }}</td>
+          <td>{{ pr.reason }}</td>
+          <td>{{ pr.date }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

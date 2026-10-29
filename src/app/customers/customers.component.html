@@ -1,0 +1,13 @@
+<div>
+  <div class="tabs">
+    <button class="chip" [class.on]="activeTab === 'list'" (click)="activeTab = 'list'">Customer Directory</button>
+    <button class="chip" [class.on]="activeTab === '360'" (click)="activeTab = '360'">Customer 360 View</button>
+    <button class="chip" [class.on]="activeTab === 'loyalty'" (click)="activeTab = 'loyalty'">Loyalty Program</button>
+    <button class="chip" [class.on]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">Gift Vouchers</button>
+  </div>
+
+  <app-customer-list *ngIf="activeTab === 'list'" (viewCustomer)="view360($event)"></app-customer-list>
+  <app-customer-360 *ngIf="activeTab === '360'" [customer]="selectedCustomer"></app-customer-360>
+  <app-loyalty *ngIf="activeTab === 'loyalty'"></app-loyalty>
+  <app-gift-vouchers *ngIf="activeTab === 'vouchers'"></app-gift-vouchers>
+</div>

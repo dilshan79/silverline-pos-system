@@ -1,0 +1,33 @@
+<div class="card" style="margin-bottom: 14px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+    <div style="display:flex;gap:6px;align-items:center">
+      <span class="mut" style="font-size:12px;font-weight:600">Quick Range:</span>
+      <button class="chip" (click)="setPreset('today')">Today</button>
+      <button class="chip" (click)="setPreset('week')">Last 7 Days</button>
+      <button class="chip" (click)="setPreset('month')">This Month</button>
+      <button class="chip" (click)="setPreset('year')">This Year</button>
+    </div>
+  </div>
+  <div class="fg">
+    <label>
+      From Date
+      <input type="date" [(ngModel)]="fromDate" />
+    </label>
+    <label>
+      To Date
+      <input type="date" [(ngModel)]="toDate" />
+    </label>
+    <label>
+      Location
+      <select [(ngModel)]="location">
+        <option value="ALL">All Outlets</option>
+        <option value="MW">Bravo Bus Stand (MW)</option>
+        <option value="SH">Fair Road (SH)</option>
+        <option value="SS">Super & Mobile (SS)</option>
+      </select>
+    </label>
+    <div style="display: flex; align-items: flex-end;">
+      <button class="btn" (click)="apply()">Generate Report</button>
+    </div>
+  </div>
+</div>

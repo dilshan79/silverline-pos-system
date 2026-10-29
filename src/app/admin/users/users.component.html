@@ -1,0 +1,86 @@
+<div class="card">
+  <div class="hd">
+    <h3>👤 System Users</h3>
+    <button class="btn" (click)="showForm = !showForm">
+      {{ showForm ? 'Cancel' : '+ Create User' }}
+    </button>
+  </div>
+
+  <div *ngIf="showForm" style="border-top:1px solid var(--bd);padding:16px">
+    <h4 style="margin:0 0 12px">Create New User</h4>
+    <div class="fg">
+      <label>Username *
+        <input type="text" [(ngModel)]="newUser.username" placeholder="e.g. kasun2">
+      </label>
+      <label>Full Name
+        <input type="text" [(ngModel)]="newUser.fullName" placeholder="e.g. Kasun Perera">
+      </label>
+      <label>Password *
+        <input type="password" [(ngModel)]="newUser.password" placeholder="Min 6 characters">
+      </label>
+      <label>Role *
+        <select [(ngModel)]="newUser.role">
+          <option value="Admin">🏢 Admin</option>
+          <option value="Owner">🏢 Owner</option>
+          <option value="Cashier">🧾 Cashier</option>
+          <option value="Technician">🔧 Technician</option>
+        </select>
+      </label>
+      <label>Location
+        <select [(ngModel)]="newUser.locationCode">
+          <option value="MW">Bravo Bus Stand (MW)</option>
+          <option value="SH">Fair Road (SH)</option>
+          <option value="SS">Super & Mobile (SS)</option>
+        </select>
+      </label>
+    </div>
+    <div *ngIf="errorMsg" style="color:var(--bad);margin-top:8px;font-size:13px">⚠ {{ errorMsg }}</div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn" (click)="createUser()">Save User</button>
+      <button class="btn alt" (click)="showForm = false">Cancel</button>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Role</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of users">
+          <td><strong>{{ u.username }}</strong></td>
+          <td>{{ u.fullName }}</td>
+          <td>
+            <span class="bd"
+              [ngClass]="{
+                'g': u.role === 'Owner',
+                'b': u.role === 'Admin' || u.role === 'Super Admin',
+                'y': u.role === 'Cashier',
+                'r': u.role === 'Technician'
+              }">
+              {{ u.role }}
+            </span>
+          </td>
+          <td>{{ u.locationCode }}</td>
+          <td>
+            <span class="bd" [ngClass]="u.status === 'Active' ? 'g' : 'r'">{{ u.status }}</span>
+          </td>
+          <td>
+            <button class="btn alt" style="font-size:12px;padding:4px 10px"
+                    (click)="toggleStatus(u)">
+              {{ u.status === 'Active' ? 'Deactivate' : 'Activate' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p *ngIf="users.length === 0" class="mut" style="padding:12px">No users found.</p>
+  </div>
+</div>

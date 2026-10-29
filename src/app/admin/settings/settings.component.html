@@ -1,0 +1,24 @@
+<div class="card">
+  <h3>System Configuration Settings</h3>
+  <div class="fg">
+    <label>
+      Company / Store Name
+      <input type="text" [(ngModel)]="companyName" />
+    </label>
+    <label>
+      VAT / Tax Rate (%)
+      <input type="number" [(ngModel)]="vatRate" />
+    </label>
+    <label>
+      Base Currency
+      <input type="text" [(ngModel)]="currency" readonly />
+    </label>
+    <label class="ck">
+      <input type="checkbox" [(ngModel)]="enableSmsAlerts" />
+      Enable Customer SMS Receipts & Job Alerts
+    </label>
+  </div>
+  <div style="margin-top: 16px;">
+    <button class="btn" (click)="saveSettings()">Save Configuration</button>
+  </div>
+</div>

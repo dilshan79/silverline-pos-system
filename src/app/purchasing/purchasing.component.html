@@ -1,0 +1,9 @@
+<div>
+  <div class="tabs">
+    <button class="chip" [class.on]="activeTab === 'po'" (click)="activeTab = 'po'">Purchase Orders</button>
+    <button class="chip" [class.on]="activeTab === 'grn'" (click)="activeTab = 'grn'">Goods Received Note (GRN)</button>
+  </div>
+
+  <app-purchase-order *ngIf="activeTab === 'po'"></app-purchase-order>
+  <app-grn *ngIf="activeTab === 'grn'"></app-grn>
+</div>

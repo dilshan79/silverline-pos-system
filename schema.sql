@@ -43,6 +43,15 @@ CREATE TABLE IF NOT EXISTS categories (
     description TEXT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS subcategories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id INT,
+    category_name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS brands (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL
@@ -56,6 +65,7 @@ CREATE TABLE IF NOT EXISTS items (
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     category_name VARCHAR(100) DEFAULT 'General',
+    subcategory VARCHAR(100) DEFAULT '',
     brand_name VARCHAR(100) DEFAULT '',
     cost DECIMAL(10,2) DEFAULT 0.00,
     price DECIMAL(10,2) DEFAULT 0.00,
@@ -124,6 +134,8 @@ CREATE TABLE IF NOT EXISTS sales (
     total DECIMAL(10,2) DEFAULT 0.00,
     tendered DECIMAL(10,2) DEFAULT 0.00,
     balance DECIMAL(10,2) DEFAULT 0.00,
+    discount_label VARCHAR(30) DEFAULT NULL, -- sub total discount as entered, e.g. 5% or Rs 200
+    terminal VARCHAR(10) DEFAULT '#1',
     payment_method VARCHAR(50) DEFAULT 'Cash', -- Cash, Card, Cheque, Credit, Split
     cashier_username VARCHAR(50) DEFAULT 'Rashmika',
     salesman_username VARCHAR(50) DEFAULT 'N/D',
@@ -141,7 +153,9 @@ CREATE TABLE IF NOT EXISTS sale_items (
     imei_number VARCHAR(100) DEFAULT NULL,
     qty INT DEFAULT 1,
     unit_price DECIMAL(10,2) DEFAULT 0.00,
-    total DECIMAL(10,2) DEFAULT 0.00,
+    discount DECIMAL(10,2) DEFAULT 0.00, -- rupees off this line
+    discount_label VARCHAR(30) DEFAULT NULL, -- as entered, e.g. 10% or Rs 500
+    total DECIMAL(10,2) DEFAULT 0.00, -- qty x unit_price minus discount
     FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -251,7 +265,8 @@ CREATE TABLE IF NOT EXISTS cheques (
 CREATE TABLE IF NOT EXISTS suspended_bills (
     id INT AUTO_INCREMENT PRIMARY KEY,
     suspend_no VARCHAR(50) UNIQUE,
-    items_json TEXT NOT NULL, -- [{code, name, qty, price}]
+    items_json TEXT NOT NULL, -- [{code, name, qty, price, discount: {type: pct|amt, value} | null}]
+    bill_discount_json TEXT DEFAULT NULL, -- {type: pct|amt, value} on the sub total
     total DECIMAL(10,2) DEFAULT 0.00,
     cashier VARCHAR(50) DEFAULT 'Rashmika',
     terminal VARCHAR(10) DEFAULT '#1',
@@ -260,23 +275,59 @@ CREATE TABLE IF NOT EXISTS suspended_bills (
     recalled_at TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ------------------------------------------------------------
+-- 16. CASH SESSIONS (FLOAT AND CLOSE CASH PER TERMINAL SHIFT)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS cash_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    terminal VARCHAR(10) NOT NULL,
+    cashier VARCHAR(50) DEFAULT 'Rashmika',
+    opening_float DECIMAL(10,2) DEFAULT 0.00,
+    start_sale_id INT DEFAULT 0, -- cash sales after this sale id belong to the shift
+    status VARCHAR(20) DEFAULT 'Open', -- Open, Closed
+    opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP NULL DEFAULT NULL,
+    cash_sales_count INT DEFAULT NULL,
+    cash_sales_total DECIMAL(10,2) DEFAULT NULL,
+    expected_cash DECIMAL(10,2) DEFAULT NULL, -- opening float + cash sales
+    counted_cash DECIMAL(10,2) DEFAULT NULL,
+    difference DECIMAL(10,2) DEFAULT NULL -- counted minus expected: + over, - short
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------------
+-- 17. CASH TRANSACTIONS (PAID IN, PAID OUT & FLOAT TOP-UPS)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS cash_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id INT DEFAULT NULL,
+    terminal VARCHAR(20) DEFAULT '#1',
+    cashier VARCHAR(100) DEFAULT 'Cashier',
+    type VARCHAR(20) NOT NULL, -- paid_in, paid_out, float_add
+    amount DECIMAL(10,2) NOT NULL,
+    reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ============================================================
 -- INITIAL SEED DATA
 -- ============================================================
-INSERT INTO locations (code, name, address, phone) VALUES
+INSERT IGNORE INTO locations (code, name, address, phone) VALUES
 ('SH', 'Fair Road', 'Fair Road, Badulla', '0552221100'),
 ('MW', 'Bravo Bus Stand', 'Bravo Bus Stand, Badulla', '0552221101'),
 ('SS', 'Super & Mobile', 'Super Market, Bandarawela', '0572221102');
 
-INSERT INTO users (username, password_hash, full_name, role, location_code) VALUES
-('dilshan', 'owner_pass_hash', 'Dilshan (Owner)', 'Owner', 'MW'),
-('rashmika', 'cashier_pass_hash', 'Rashmika', 'Cashier', 'MW'),
-('kasun', 'tech_pass_hash', 'Kasun', 'Technician', 'MW');
+INSERT IGNORE INTO users (username, password_hash, full_name, role, location_code) VALUES
+('admin', '$2y$10$.DLKVJMN8otpqGkAKXIpGuOq0CWfTdHkOtLElq8dC1DoXWWh3zBxm', 'Administrator', 'Super Admin', 'MW'),
+('owner', '$2y$10$C4Vgyz3H9B8WtGsnwmF/ResXywAyOe5jURXXxg8dj.YSaqtf1PTBa', 'Dilshan (Owner)', 'Owner', 'MW'),
+('dilshan', '$2y$10$C4Vgyz3H9B8WtGsnwmF/ResXywAyOe5jURXXxg8dj.YSaqtf1PTBa', 'Dilshan (Owner)', 'Owner', 'MW'),
+('cashier', '$2y$10$6XGGV0VzJs108.uzAFfmA.9DB4YqK7XBeztMNX38fWiYczKbLtzcy', 'Rashmika (Cashier)', 'Cashier', 'MW'),
+('rashmika', '$2y$10$6XGGV0VzJs108.uzAFfmA.9DB4YqK7XBeztMNX38fWiYczKbLtzcy', 'Rashmika', 'Cashier', 'MW'),
+('kasun', '$2y$10$q6KDZjj9lajtdUDO3ujgxOYC7xIlu/v3FXX5AsCIei2lgbIbSamIG', 'Kasun', 'Technician', 'MW');
 
-INSERT INTO categories (name) VALUES ('Phones'), ('Accessories'), ('Services'), ('Reload'), ('Bill Payments');
-INSERT INTO brands (name) VALUES ('Samsung'), ('Xiaomi'), ('Singer'), ('Dialog');
+INSERT IGNORE INTO categories (name) VALUES ('Phones'), ('Accessories'), ('Services'), ('Reload'), ('Bill Payments');
+INSERT IGNORE INTO brands (name) VALUES ('Samsung'), ('Xiaomi'), ('Singer'), ('Dialog');
 
-INSERT INTO items (code, name, category_name, brand_name, cost, price, stock, track_imei) VALUES 
+INSERT IGNORE INTO items (code, name, category_name, brand_name, cost, price, stock, track_imei) VALUES 
 ('101005', 'Samsung A03s 64GB', 'Phones', 'Samsung', 65000.00, 72900.00, 6, 1),
 ('101003', 'Samsung M02 32GB', 'Phones', 'Samsung', 28000.00, 31900.00, 0, 1),
 ('101004', 'Redmi 12 128GB', 'Phones', 'Xiaomi', 52000.00, 58500.00, 2, 1),
@@ -286,14 +337,15 @@ INSERT INTO items (code, name, category_name, brand_name, cost, price, stock, tr
 ('100102', 'CCTV 4-cam Install', 'Services', 'General', 25000.00, 35000.00, 99, 0),
 ('100101', 'Dialog TV Install', 'Services', 'Dialog', 3000.00, 4500.00, 99, 0);
 
-INSERT INTO item_imeis (item_code, imei_number, location_code, status) VALUES
+INSERT IGNORE INTO item_imeis (item_code, imei_number, location_code, status) VALUES
 ('101005', '356910008821', 'SH', 'Sold'),
 ('101005', '356910007710', 'MW', 'In Stock');
 
-INSERT INTO customers (phone, name, customer_type, balance, loyalty_tier) VALUES
+INSERT IGNORE INTO customers (phone, name, customer_type, balance, loyalty_tier) VALUES
 ('0702256233', 'Mr Acman', 'Retail', 0.00, 'Silver'),
 ('0703885240', 'Mr Gamage', 'Credit', 12500.00, 'Gold');
 
-INSERT INTO suppliers (name, contact_person, phone) VALUES
+INSERT IGNORE INTO suppliers (name, contact_person, phone) VALUES
 ('Singer Sri Lanka', 'Mr. Perera', '0112300000'),
 ('Mobil King', 'Mr. Nimal', '0771234567');
+

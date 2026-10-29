@@ -1,0 +1,36 @@
+<div class="dlg-backdrop" *ngIf="visible" (click)="cancelled.emit()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()">
+    <h3>Process Payment</h3>
+    <div class="total-display">
+      <span class="mut">Total Payable:</span>
+      <span class="amount">{{ total | currencyLkr }}</span>
+    </div>
+
+    <div class="fg">
+      <label>
+        Payment Method
+        <select [(ngModel)]="paymentMethod">
+          <option value="Cash">Cash</option>
+          <option value="Card">Credit/Debit Card</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </label>
+
+      <label *ngIf="paymentMethod === 'Cash'">
+        Tendered Amount
+        <input type="number" [(ngModel)]="tendered" placeholder="0.00" />
+      </label>
+    </div>
+
+    <div class="balance-display" *ngIf="paymentMethod === 'Cash' && tendered >= total">
+      <span class="mut">Change / Balance:</span>
+      <span class="change">{{ balance | currencyLkr }}</span>
+    </div>
+
+    <div class="dlg-actions">
+      <button class="btn alt" (click)="cancelled.emit()">Cancel</button>
+      <button class="btn" (click)="submitPayment()">Complete Sale</button>
+    </div>
+  </div>
+</div>

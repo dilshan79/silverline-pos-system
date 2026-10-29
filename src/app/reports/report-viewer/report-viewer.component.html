@@ -1,0 +1,247 @@
+<div class="report-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="card loading-card">
+    <div class="spinner"></div>
+    <p>Loading report data from database...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="card error-card">
+    <div class="error-msg">⚠️ {{ errorMessage }}</div>
+    <button class="btn" (click)="loadReport()" style="margin-top: 8px;">Retry</button>
+  </div>
+
+  <!-- Report Content -->
+  <div class="card" *ngIf="!isLoading && reportData">
+    <!-- Header with Title & Action Buttons -->
+    <div class="report-header">
+      <div class="title-section">
+        <h3>{{ getReportTitle() }}</h3>
+        <span class="mut" *ngIf="filter">
+          Period: <b>{{ filter.fromDate }}</b> to <b>{{ filter.toDate }}</b> &bull; Outlet: <b>{{ filter.location || 'All Outlets' }}</b>
+        </span>
+      </div>
+      <div class="action-buttons">
+        <button class="btn btn-secondary" (click)="exportCsv()" title="Export data to CSV spreadsheet">
+          📥 Export CSV
+        </button>
+        <button class="btn btn-secondary" (click)="printReport()" title="Print or save as PDF">
+          🖨️ Print
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. SALES SUMMARY VIEW -->
+    <ng-container *ngIf="reportType === 'sales'">
+      <div class="grid kpi" *ngIf="reportData.summary" style="margin-bottom: 20px;">
+        <app-kpi-card label="Total Revenue" [value]="reportData.summary.totalSales | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Cost of Goods" [value]="reportData.summary.totalCost | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Gross Profit" [value]="reportData.summary.grossProfit | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Invoices Count" [value]="reportData.summary.totalInvoices"></app-kpi-card>
+        <app-kpi-card label="Total Discounts" [value]="reportData.summary.totalDiscounts | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Cash Collected" [value]="reportData.summary.cashTotal | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Card Sales" [value]="reportData.summary.cardTotal | currencyLkr"></app-kpi-card>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th style="text-align: right;">Invoices</th>
+              <th style="text-align: right;">Cash Total</th>
+              <th style="text-align: right;">Card Total</th>
+              <th style="text-align: right;">Discounts</th>
+              <th style="text-align: right;">Cost</th>
+              <th style="text-align: right;">Revenue</th>
+              <th style="text-align: right;">Gross Profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of reportData.data">
+              <td><b>{{ row.date }}</b></td>
+              <td style="text-align: right;">{{ row.invoices }}</td>
+              <td style="text-align: right;">{{ row.cash_total | currencyLkr }}</td>
+              <td style="text-align: right;">{{ row.card_total | currencyLkr }}</td>
+              <td style="text-align: right; color: var(--bad);">{{ row.discount | currencyLkr }}</td>
+              <td style="text-align: right;">{{ row.total_cost | currencyLkr }}</td>
+              <td style="text-align: right; font-weight: 600;">{{ row.revenue | currencyLkr }}</td>
+              <td style="text-align: right; font-weight: 700; color: var(--ok);">{{ row.profit | currencyLkr }}</td>
+            </tr>
+            <tr *ngIf="!reportData.data || reportData.data.length === 0">
+              <td colspan="8" class="empty-state">No sales recorded for this date range.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <!-- 2. INVENTORY & STOCK VALUATION VIEW -->
+    <ng-container *ngIf="reportType === 'inventory' || reportType === 'stock'">
+      <div class="grid kpi" *ngIf="reportData.summary" style="margin-bottom: 20px;">
+        <app-kpi-card label="Catalog Items" [value]="reportData.summary.totalItems"></app-kpi-card>
+        <app-kpi-card label="Total Stock Units" [value]="reportData.summary.totalUnits"></app-kpi-card>
+        <app-kpi-card label="Total Cost Value" [value]="reportData.summary.totalCost | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Total Retail Value" [value]="reportData.summary.retailValue | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Potential Margin" [value]="reportData.summary.potentialMargin | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Low Stock Items" [value]="reportData.summary.lowStock" [sub]="reportData.summary.lowStock > 0 ? 'Stock < 3 units' : 'Optimal'"></app-kpi-card>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>Item Code</th>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th style="text-align: right;">Stock Qty</th>
+              <th style="text-align: right;">Unit Cost</th>
+              <th style="text-align: right;">Selling Price</th>
+              <th style="text-align: right;">Total Cost Value</th>
+              <th style="text-align: right;">Total Retail Value</th>
+              <th style="text-align: center;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of reportData.data">
+              <td><code>{{ it.code }}</code></td>
+              <td><b>{{ it.name }}</b></td>
+              <td><span class="chip" style="font-size: 11px; padding: 2px 8px;">{{ it.category || 'General' }}</span></td>
+              <td style="text-align: right; font-weight: 700;" [style.color]="it.stock < 3 ? 'var(--bad)' : 'inherit'">{{ it.stock }}</td>
+              <td style="text-align: right;">{{ it.cost | currencyLkr }}</td>
+              <td style="text-align: right;">{{ it.price | currencyLkr }}</td>
+              <td style="text-align: right;">{{ it.stock_cost | currencyLkr }}</td>
+              <td style="text-align: right; font-weight: 600;">{{ it.retail_val | currencyLkr }}</td>
+              <td style="text-align: center;">
+                <span class="badge" [ngClass]="it.stock < 3 ? 'badge-bad' : 'badge-ok'">
+                  {{ it.stock < 3 ? 'Low Stock' : 'In Stock' }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="!reportData.data || reportData.data.length === 0">
+              <td colspan="9" class="empty-state">No inventory items found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <!-- 3. PROFIT & LOSS VIEW -->
+    <ng-container *ngIf="reportType === 'pnl' || reportType === 'profit'">
+      <div class="grid kpi" *ngIf="reportData.summary" style="margin-bottom: 20px;">
+        <app-kpi-card label="Gross Revenue" [value]="reportData.summary.totalSales | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Total Discounts" [value]="reportData.summary.totalDiscounts | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Cost of Goods (COGS)" [value]="reportData.summary.totalCost | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Gross Profit" [value]="reportData.summary.grossProfit | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Profit Margin" [value]="(reportData.summary.marginPct || 0) + '%'"></app-kpi-card>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th style="text-align: right;">Revenue</th>
+              <th style="text-align: right;">Discounts</th>
+              <th style="text-align: right;">Cost of Goods (COGS)</th>
+              <th style="text-align: right;">Gross Profit</th>
+              <th style="text-align: right;">Margin %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of reportData.data">
+              <td><b>{{ row.date }}</b></td>
+              <td style="text-align: right;">{{ row.revenue | currencyLkr }}</td>
+              <td style="text-align: right; color: var(--bad);">{{ row.discounts | currencyLkr }}</td>
+              <td style="text-align: right;">{{ row.cogs | currencyLkr }}</td>
+              <td style="text-align: right; font-weight: 700; color: var(--ok);">{{ row.gross_profit | currencyLkr }}</td>
+              <td style="text-align: right; font-weight: 600;">{{ row.margin_pct }}%</td>
+            </tr>
+            <tr *ngIf="!reportData.data || reportData.data.length === 0">
+              <td colspan="6" class="empty-state">No sales transactions available for P&L analysis.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <!-- 4. TAX & VAT REPORT VIEW -->
+    <ng-container *ngIf="reportType === 'tax'">
+      <div class="grid kpi" *ngIf="reportData.summary" style="margin-bottom: 20px;">
+        <app-kpi-card label="Gross Total (Incl. VAT)" [value]="(reportData.summary.grossTotal || reportData.summary.totalSales) | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Net Taxable Amount" [value]="(reportData.summary.netTaxable || reportData.summary.totalCost) | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="VAT Collected (18%)" [value]="(reportData.summary.vatTotal || reportData.summary.grossProfit) | currencyLkr"></app-kpi-card>
+        <app-kpi-card label="Statutory VAT Rate" value="18% (Sri Lanka)"></app-kpi-card>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th style="text-align: right;">Invoices Count</th>
+              <th style="text-align: right;">Net Taxable Base</th>
+              <th style="text-align: right;">Output VAT (18%)</th>
+              <th style="text-align: right;">Gross Collected</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of reportData.data">
+              <td><b>{{ row.date }}</b></td>
+              <td style="text-align: right;">{{ row.invoices }}</td>
+              <td style="text-align: right;">{{ row.net | currencyLkr }}</td>
+              <td style="text-align: right; font-weight: 600; color: var(--acc);">{{ row.vat | currencyLkr }}</td>
+              <td style="text-align: right; font-weight: 700;">{{ row.gross | currencyLkr }}</td>
+            </tr>
+            <tr *ngIf="!reportData.data || reportData.data.length === 0">
+              <td colspan="5" class="empty-state">No transactions subject to VAT in this period.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <!-- 5. TOP SELLING ITEMS VIEW -->
+    <ng-container *ngIf="reportType === 'top-items'">
+      <div class="grid kpi" *ngIf="reportData.summary" style="margin-bottom: 20px;">
+        <app-kpi-card label="Top Products Ranked" [value]="reportData.summary.totalItemsTracked || reportData.data?.length || 0"></app-kpi-card>
+        <app-kpi-card label="Total Units Sold" [value]="reportData.summary.totalUnitsSold || reportData.summary.totalCost || 0"></app-kpi-card>
+        <app-kpi-card label="Top Products Revenue" [value]="(reportData.summary.totalRevenue || reportData.summary.totalSales) | currencyLkr"></app-kpi-card>
+      </div>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px; text-align: center;">Rank</th>
+              <th>Item Code</th>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th style="text-align: right;">Units Sold</th>
+              <th style="text-align: right;">Total Revenue</th>
+              <th style="text-align: right;">Avg Price / Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of reportData.data; let idx = index">
+              <td style="text-align: center;">
+                <span class="rank-badge" [class.gold]="idx === 0" [class.silver]="idx === 1" [class.bronze]="idx === 2">
+                  #{{ idx + 1 }}
+                </span>
+              </td>
+              <td><code>{{ it.item_code }}</code></td>
+              <td><b>{{ it.item_name }}</b></td>
+              <td><span class="chip" style="font-size: 11px; padding: 2px 8px;">{{ it.category || 'General' }}</span></td>
+              <td style="text-align: right; font-weight: 700;">{{ it.total_qty }}</td>
+              <td style="text-align: right; font-weight: 700; color: var(--ok);">{{ it.total_revenue | currencyLkr }}</td>
+              <td style="text-align: right;">{{ (it.total_qty > 0 ? (it.total_revenue / it.total_qty) : 0) | currencyLkr }}</td>
+            </tr>
+            <tr *ngIf="!reportData.data || reportData.data.length === 0">
+              <td colspan="7" class="empty-state">No product sales found for this period.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</div>

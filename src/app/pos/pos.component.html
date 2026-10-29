@@ -1,0 +1,9 @@
+<div>
+  <div class="tabs">
+    <button class="chip" [class.on]="activeTab === 'billing'" (click)="activeTab = 'billing'">Billing</button>
+    <button class="chip" [class.on]="activeTab === 'returns'" (click)="activeTab = 'returns'">Returns</button>
+  </div>
+
+  <app-pos-screen *ngIf="activeTab === 'billing'"></app-pos-screen>
+  <app-returns     *ngIf="activeTab === 'returns'"></app-returns>
+</div>

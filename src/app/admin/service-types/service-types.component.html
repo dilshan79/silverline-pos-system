@@ -1,0 +1,21 @@
+<div class="card">
+  <h3>Service Job Master Types & Pricing</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Service Type</th>
+          <th>Standard Base Fee</th>
+          <th>Est. Duration (Hours)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let st of serviceTypes">
+          <td>{{ st.name }}</td>
+          <td>{{ st.basePrice | currencyLkr }}</td>
+          <td>{{ st.estimatedHours }} hrs</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

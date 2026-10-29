@@ -1,0 +1,106 @@
+<div class="card">
+  <div class="hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+    <div>
+      <h3 style="margin:0 0 4px">Item Master & Catalog</h3>
+      <p class="mut" style="margin:0;font-size:13px">Manage products, pricing, stock levels, categories and subcategories</p>
+    </div>
+    <div>
+      <button class="btn" (click)="openCreate()">+ Add New Item</button>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;background:var(--bg);padding:10px 14px;border-radius:8px">
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="mut" style="font-size:12px;font-weight:600">Category:</span>
+      <select [(ngModel)]="selectedCategory" (change)="onCategoryFilterChange()" style="padding:6px 10px;border-radius:6px;border:1px solid var(--bd)">
+        <option value="All">All Categories</option>
+        <option *ngFor="let cat of categories" [value]="cat.name">{{ cat.name }}</option>
+      </select>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="mut" style="font-size:12px;font-weight:600">Subcategory:</span>
+      <select [(ngModel)]="selectedSubcategory" (change)="applyFilter()" style="padding:6px 10px;border-radius:6px;border:1px solid var(--bd)">
+        <option value="All">All Subcategories</option>
+        <option *ngFor="let sc of filteredSubcategoriesForFilter" [value]="sc.name">{{ sc.name }}</option>
+      </select>
+    </div>
+
+    <div style="flex:1;min-width:200px">
+      <input type="text" [(ngModel)]="searchTerm" (input)="applyFilter()" placeholder="Search item code, name, subcategory…" style="width:100%;padding:6px 12px;border-radius:6px;border:1px solid var(--bd)">
+    </div>
+  </div>
+
+  <div *ngIf="successMsg" class="alert-success" style="padding:10px 14px;background:#e6f4ea;color:#137333;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✓ {{ successMsg }}
+  </div>
+
+  <div *ngIf="errorMsg" class="alert-danger" style="padding:10px 14px;background:#fce8e6;color:#c5221f;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✕ {{ errorMsg }}
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name / Description</th>
+          <th>Category</th>
+          <th>Subcategory</th>
+          <th style="text-align:right">Cost</th>
+          <th style="text-align:right">Selling Price</th>
+          <th style="text-align:center">Stock</th>
+          <th style="text-align:center">IMEI</th>
+          <th style="text-align:center">Status</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of filteredItems">
+          <td><strong style="color:var(--pri)">{{ item.code }}</strong></td>
+          <td>
+            <strong>{{ item.name }}</strong>
+          </td>
+          <td><span class="bd g" style="font-size:11px">{{ item.categoryName }}</span></td>
+          <td class="mut" style="font-size:12px">{{ item.subcategory || '—' }}</td>
+          <td style="text-align:right" class="mut">{{ (item.cost || 0) | currencyLkr }}</td>
+          <td style="text-align:right"><strong>{{ item.price | currencyLkr }}</strong></td>
+          <td style="text-align:center">
+            <span class="bd" [class.g]="item.stock > 5" [class.r]="item.stock <= 5">
+              {{ item.stock }}
+            </span>
+          </td>
+          <td style="text-align:center">
+            <span *ngIf="item.trackImei" class="bd g" style="font-size:11px">IMEI</span>
+            <span *ngIf="!item.trackImei" class="mut" style="font-size:11px">No</span>
+          </td>
+          <td style="text-align:center">
+            <span class="bd" [class.g]="(item.status || 'Active') === 'Active'" [class.r]="item.status === 'Inactive'" style="font-size:11px">
+              {{ item.status || 'Active' }}
+            </span>
+          </td>
+          <td style="text-align:right">
+            <button class="btn alt" style="margin-right:6px;padding:4px 8px;font-size:12px" (click)="openEdit(item)">Edit</button>
+            <button class="btn red" style="padding:4px 8px;font-size:12px" (click)="deleteItem(item)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredItems.length === 0 && !loading">
+          <td colspan="10" style="text-align:center;padding:24px" class="mut">No items found matching filter criteria.</td>
+        </tr>
+        <tr *ngIf="loading">
+          <td colspan="10" style="text-align:center;padding:24px" class="mut">Loading items…</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <app-item-form
+    [visible]="showForm"
+    [item]="selectedItem"
+    [categories]="categories"
+    [allSubcategories]="allSubcategories"
+    (cancelled)="showForm = false"
+    (saved)="saveItem($event)"
+  ></app-item-form>
+</div>

@@ -1,0 +1,13 @@
+<div class="loc-wrap">
+  <button class="btn alt loc-btn" (click)="open = !open">
+    📍 {{ active?.name }}
+  </button>
+  <div class="loc-dropdown card" *ngIf="open">
+    <button
+      *ngFor="let loc of locations"
+      class="loc-item"
+      [class.on]="loc.code === active?.code"
+      (click)="select(loc.code)"
+    >{{ loc.name }}</button>
+  </div>
+</div>

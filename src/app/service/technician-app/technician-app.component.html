@@ -1,0 +1,9 @@
+<div class="phone">
+  <h3>Technician Portal</h3>
+  <div *ngFor="let j of assignedJobs" class="card job">
+    <h4>{{ j.jobNo }}</h4>
+    <p>{{ j.task }}</p>
+    <p class="mut">Client: {{ j.customer }}</p>
+    <button class="btn g" (click)="completeJob(j.jobNo)">Mark Complete</button>
+  </div>
+</div>

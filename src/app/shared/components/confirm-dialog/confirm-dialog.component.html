@@ -1,0 +1,10 @@
+<div class="dlg-backdrop" *ngIf="visible" (click)="cancelled.emit()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()">
+    <h3>{{ title }}</h3>
+    <p class="mut">{{ message }}</p>
+    <div class="dlg-actions">
+      <button class="btn alt" (click)="cancelled.emit()">{{ cancelLabel }}</button>
+      <button class="btn" [class.red]="danger" (click)="confirmed.emit()">{{ confirmLabel }}</button>
+    </div>
+  </div>
+</div>

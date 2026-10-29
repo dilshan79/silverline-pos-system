@@ -1,0 +1,13 @@
+<div class="card">
+  <div class="hd">
+    <h3>Job Ticket: {{ job.jobNo }}</h3>
+    <app-status-badge [status]="job.status"></app-status-badge>
+  </div>
+  <div class="fg">
+    <div><strong>Customer:</strong> {{ job.customerName }} ({{ job.customerPhone }})</div>
+    <div><strong>Device:</strong> {{ job.device }}</div>
+    <div><strong>Issue Description:</strong> {{ job.issue }}</div>
+    <div><strong>Assigned Tech:</strong> {{ job.technician }}</div>
+    <div><strong>Estimated Cost:</strong> {{ job.estimate | currencyLkr }}</div>
+  </div>
+</div>

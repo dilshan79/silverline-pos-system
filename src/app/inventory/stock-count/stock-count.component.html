@@ -1,0 +1,176 @@
+<div class="card">
+  <!-- Title -->
+  <div class="hd" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h3 style="margin:0 0 4px">Stock Audit & Physical Count Verification</h3>
+      <p class="mut" style="margin:0;font-size:13px">Perform regular physical counts, record variances, and commit stock adjustments</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="chip" [class.on]="activeSubTab === 'audit'" (click)="activeSubTab = 'audit'">New Audit Session</button>
+      <button class="chip" [class.on]="activeSubTab === 'history'" (click)="activeSubTab = 'history'">Audit History & Logs</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMsg" class="alert-success" style="padding:10px 14px;background:#e6f4ea;color:#137333;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✓ {{ successMsg }}
+  </div>
+
+  <div *ngIf="errorMsg" class="alert-danger" style="padding:10px 14px;background:#fce8e6;color:#c5221f;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✕ {{ errorMsg }}
+  </div>
+
+  <!-- SubTab 1: New Audit Session -->
+  <div *ngIf="activeSubTab === 'audit'">
+    <!-- Top Summary Banner -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:16px">
+      <div style="background:var(--bg);padding:12px 14px;border-radius:8px">
+        <span class="mut" style="font-size:11px;font-weight:600;text-transform:uppercase">Items in Session</span>
+        <div style="font-size:20px;font-weight:bold;margin-top:4px">{{ auditLines.length }}</div>
+      </div>
+      <div style="background:var(--bg);padding:12px 14px;border-radius:8px">
+        <span class="mut" style="font-size:11px;font-weight:600;text-transform:uppercase">Discrepancies</span>
+        <div style="font-size:20px;font-weight:bold;margin-top:4px" [style.color]="getDiscrepancyCount() > 0 ? '#eb5757' : '#27ae60'">
+          {{ getDiscrepancyCount() }} items
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:12px 14px;border-radius:8px">
+        <span class="mut" style="font-size:11px;font-weight:600;text-transform:uppercase">Net Unit Variance</span>
+        <div style="font-size:20px;font-weight:bold;margin-top:4px" [style.color]="getTotalNetVariance() < 0 ? '#eb5757' : (getTotalNetVariance() > 0 ? '#27ae60' : 'inherit')">
+          {{ getTotalNetVariance() > 0 ? '+' : '' }}{{ getTotalNetVariance() }}
+        </div>
+      </div>
+      <div style="background:var(--bg);padding:12px 14px;border-radius:8px">
+        <span class="mut" style="font-size:11px;font-weight:600;text-transform:uppercase">Cost Variance Impact</span>
+        <div style="font-size:18px;font-weight:bold;margin-top:4px" [style.color]="getTotalCostImpact() < 0 ? '#eb5757' : (getTotalCostImpact() > 0 ? '#27ae60' : 'inherit')">
+          {{ getTotalCostImpact() | currencyLkr }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Bar & Batch Buttons -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;background:var(--bg);padding:10px 14px;border-radius:8px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="mut" style="font-size:12px;font-weight:600">Branch:</span>
+        <select [(ngModel)]="selectedLocation" style="padding:6px 10px;border-radius:6px;border:1px solid var(--bd)">
+          <option value="MW">Bravo Bus Stand (MW)</option>
+          <option value="SH">Fair Road (SH)</option>
+          <option value="SS">Super & Mobile (SS)</option>
+        </select>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="mut" style="font-size:12px;font-weight:600">Category:</span>
+        <select [(ngModel)]="selectedCategory" (change)="onFilterChange()" style="padding:6px 10px;border-radius:6px;border:1px solid var(--bd)">
+          <option value="All">All Categories</option>
+          <option *ngFor="let cat of categories" [value]="cat.name">{{ cat.name }}</option>
+        </select>
+      </div>
+
+      <div style="flex:1;min-width:180px">
+        <input type="text" [(ngModel)]="searchTerm" (input)="onFilterChange()" placeholder="Filter by code or item name…" style="width:100%;padding:6px 12px;border-radius:6px;border:1px solid var(--bd)">
+      </div>
+
+      <button type="button" class="btn alt" style="padding:6px 12px;font-size:12px" (click)="setMatchAll()" title="Set all physical counts equal to system stock">
+        ✓ Match All
+      </button>
+
+      <button type="button" class="btn" style="padding:8px 16px;font-weight:bold" (click)="saveAudit()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving…' : 'Save & Commit Audit' }}
+      </button>
+    </div>
+
+    <!-- Audit Count Table -->
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:90px">Code</th>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th style="text-align:center;width:100px">System Stock</th>
+            <th style="text-align:center;width:140px">Physical Count</th>
+            <th style="text-align:center;width:100px">Variance</th>
+            <th style="text-align:right">Cost Impact</th>
+            <th>Reason / Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredLines" [class.discrepancy-row]="item.variance !== 0">
+            <td><strong style="color:var(--pri)">{{ item.code }}</strong></td>
+            <td><strong>{{ item.name }}</strong></td>
+            <td><span class="bd" style="font-size:11px">{{ item.category }}</span></td>
+            <td style="text-align:center;font-weight:bold;font-size:14px">{{ item.systemStock }}</td>
+            <td style="text-align:center">
+              <input type="number" [(ngModel)]="item.physicalCount" (ngModelChange)="onCountChange(item)" min="0" style="width:85px;padding:6px 8px;font-size:14px;font-weight:bold;text-align:center;border-radius:6px;border:1px solid var(--bd)" />
+            </td>
+            <td style="text-align:center">
+              <span class="bd" [class.g]="item.variance > 0" [class.r]="item.variance < 0" [class.mut]="item.variance === 0" style="font-weight:bold;font-size:13px">
+                {{ item.variance > 0 ? '+' : '' }}{{ item.variance }}
+              </span>
+            </td>
+            <td style="text-align:right;font-weight:600" [style.color]="item.costImpact < 0 ? '#eb5757' : (item.costImpact > 0 ? '#27ae60' : 'inherit')">
+              {{ item.costImpact | currencyLkr }}
+            </td>
+            <td>
+              <input type="text" [(ngModel)]="item.reason" placeholder="Reason" style="width:100%;padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid var(--bd)" />
+            </td>
+          </tr>
+          <tr *ngIf="filteredLines.length === 0 && !loading">
+            <td colspan="8" style="text-align:center;padding:24px" class="mut">No items match the filter criteria.</td>
+          </tr>
+          <tr *ngIf="loading">
+            <td colspan="8" style="text-align:center;padding:24px" class="mut">Loading inventory items for audit…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SubTab 2: Audit History -->
+  <div *ngIf="activeSubTab === 'history'">
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>Audit #</th>
+            <th>Date & Time</th>
+            <th>Branch</th>
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th style="text-align:center">System</th>
+            <th style="text-align:center">Physical</th>
+            <th style="text-align:center">Variance</th>
+            <th style="text-align:right">Cost Impact</th>
+            <th>Reason</th>
+            <th>Audited By</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of auditHistory">
+            <td><strong style="color:var(--pri)">{{ h.audit_no }}</strong></td>
+            <td class="mut">{{ h.created_at | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td><b>{{ h.location_code }}</b></td>
+            <td>{{ h.item_code }}</td>
+            <td><strong>{{ h.item_name }}</strong></td>
+            <td style="text-align:center">{{ h.system_stock }}</td>
+            <td style="text-align:center;font-weight:bold">{{ h.physical_count }}</td>
+            <td style="text-align:center">
+              <span class="bd" [class.g]="h.variance > 0" [class.r]="h.variance < 0" [class.mut]="h.variance === 0">
+                {{ h.variance > 0 ? '+' : '' }}{{ h.variance }}
+              </span>
+            </td>
+            <td style="text-align:right;font-weight:600" [style.color]="h.cost_impact < 0 ? '#eb5757' : (h.cost_impact > 0 ? '#27ae60' : 'inherit')">
+              {{ h.cost_impact | currencyLkr }}
+            </td>
+            <td>{{ h.reason || '—' }}</td>
+            <td class="mut">{{ h.audited_by || 'Admin' }}</td>
+          </tr>
+          <tr *ngIf="auditHistory.length === 0">
+            <td colspan="11" style="text-align:center;padding:24px" class="mut">No previous stock audits recorded.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

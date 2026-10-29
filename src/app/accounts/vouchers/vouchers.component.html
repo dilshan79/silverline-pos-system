@@ -1,0 +1,27 @@
+<div class="card">
+  <h3>Journal & Payment Vouchers</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Voucher No</th>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Debit</th>
+          <th>Credit</th>
+          <th>Memo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of vouchers">
+          <td>{{ v.voucherNo }}</td>
+          <td>{{ v.date }}</td>
+          <td>{{ v.type }}</td>
+          <td>{{ v.debit | currencyLkr }}</td>
+          <td>{{ v.credit | currencyLkr }}</td>
+          <td>{{ v.memo }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

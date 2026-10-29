@@ -1,0 +1,29 @@
+<div class="card">
+  <div class="hd">
+    <h3>Goods Received Notes (GRN)</h3>
+    <button class="btn" (click)="scanning = true">📷 Scan / Receive GRN</button>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>GRN Number</th>
+          <th>PO Number</th>
+          <th>Supplier</th>
+          <th>Received Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let g of grnList">
+          <td>{{ g.grnNo }}</td>
+          <td>{{ g.poNo }}</td>
+          <td>{{ g.supplier }}</td>
+          <td>{{ g.receivedDate }}</td>
+          <td><app-status-badge [status]="g.status"></app-status-badge></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <app-grn-scan *ngIf="scanning" (closed)="scanning = false"></app-grn-scan>
+</div>

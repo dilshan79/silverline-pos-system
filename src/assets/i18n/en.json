@@ -1,0 +1,14 @@
+{
+  "APP": {
+    "TITLE": "Silverline POS",
+    "DASHBOARD": "Dashboard",
+    "POS": "POS / Billing",
+    "INVENTORY": "Inventory",
+    "PURCHASING": "Purchasing",
+    "ACCOUNTS": "Accounts",
+    "SERVICE": "Service & Repairs",
+    "CUSTOMERS": "Customers",
+    "REPORTS": "Reports",
+    "ADMIN": "Administration"
+  }
+}

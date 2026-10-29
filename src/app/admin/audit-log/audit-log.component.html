@@ -1,0 +1,23 @@
+<div class="card">
+  <h3>System Audit Trail</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>IP Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs">
+          <td>{{ log.timestamp }}</td>
+          <td><strong>{{ log.user }}</strong></td>
+          <td><span class="bd b">{{ log.action }}</span></td>
+          <td>{{ log.ip }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

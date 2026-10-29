@@ -1,0 +1,35 @@
+<div class="app">
+  <nav>
+    <h1>🏪 Silverline POS</h1>
+
+    <ng-container *ngFor="let group of visibleGroups">
+      <small>{{ group.title }}</small>
+      <button
+        *ngFor="let item of group.items"
+        [routerLink]="item.route"
+        routerLinkActive="on"
+        [routerLinkActiveOptions]="{exact: item.exact ?? false}">
+        {{ item.icon }} {{ item.label }}
+      </button>
+    </ng-container>
+
+    <div style="margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);padding-bottom:8px">
+      <div style="padding:4px 12px;font-size:13px;color:#e0eeea">
+        {{ roleBadge }} <strong>{{ currentUser?.fullName || currentUser?.username }}</strong>
+      </div>
+      <div class="mut" style="padding:0 12px 8px;font-size:11px;color:#7aada0">
+        {{ currentUser?.role }} &nbsp;·&nbsp; {{ currentUser?.locationCode }}
+      </div>
+      <button (click)="logout()"
+        style="display:block;width:100%;text-align:left;background:none;border:0;
+               color:#cfe0db;padding:8px 12px;border-radius:8px;font:inherit;
+               cursor:pointer;font-size:13px">
+        🚪 Log Out
+      </button>
+    </div>
+  </nav>
+
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div>

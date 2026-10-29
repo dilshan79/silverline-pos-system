@@ -1,0 +1,25 @@
+<div class="card">
+  <h3>Role Matrix & Permissions</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Role Title</th>
+          <th>POS Access</th>
+          <th>Inventory Access</th>
+          <th>Accounts Access</th>
+          <th>Admin Access</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of roles">
+          <td><strong>{{ r.role }}</strong></td>
+          <td><input type="checkbox" [(ngModel)]="r.posAccess" disabled /></td>
+          <td><input type="checkbox" [(ngModel)]="r.inventoryAccess" disabled /></td>
+          <td><input type="checkbox" [(ngModel)]="r.accountsAccess" disabled /></td>
+          <td><input type="checkbox" [(ngModel)]="r.adminAccess" disabled /></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

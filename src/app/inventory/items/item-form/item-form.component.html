@@ -1,0 +1,88 @@
+<div class="dlg-backdrop" *ngIf="visible" (click)="cancelled.emit()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()" style="max-width:540px;width:95%">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">{{ item.id ? 'Edit Item: ' + item.code : 'New Item Master' }}</h3>
+      <button class="btn alt" style="padding:2px 8px;font-size:12px" (click)="cancelled.emit()">✕</button>
+    </div>
+
+    <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <!-- Item Code -->
+      <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Item Code *</span>
+        <div style="display:flex;gap:4px">
+          <input type="text" [(ngModel)]="item.code" placeholder="e.g. 101008" style="flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+          <button type="button" class="btn alt" style="padding:0 8px;font-size:11px" (click)="generateCode()" title="Auto generate code">Gen</button>
+        </div>
+      </label>
+
+      <!-- Status -->
+      <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Status</span>
+        <select [(ngModel)]="item.status" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </label>
+
+      <!-- Item Name (Spans 2 columns) -->
+      <label style="grid-column:1 / -1;display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Item Name / Description *</span>
+        <input type="text" [(ngModel)]="item.name" placeholder="e.g. Samsung 25W Fast Charger Type-C" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+      </label>
+
+      <!-- Category -->
+      <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Category *</span>
+        <select [(ngModel)]="item.categoryName" (change)="onCategoryChange()" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+          <option *ngFor="let cat of categories" [value]="cat.name">{{ cat.name }}</option>
+        </select>
+      </label>
+
+      <!-- Subcategory -->
+      <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Subcategory</span>
+        <select [(ngModel)]="item.subcategory" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+          <option value="">— None / General —</option>
+          <option *ngFor="let sc of filteredSubcategories" [value]="sc.name">{{ sc.name }}</option>
+        </select>
+      </label>
+
+      <!-- Cost Price -->
+      <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Cost Price (LKR)</span>
+        <input type="number" [(ngModel)]="item.cost" min="0" placeholder="0.00" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+      </label>
+
+      <!-- Selling Price -->
+      <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Selling Retail Price (LKR) *</span>
+        <input type="number" [(ngModel)]="item.price" min="0" placeholder="0.00" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+      </label>
+
+      <!-- Profit / Margin Preview -->
+      <div style="grid-column:1 / -1;background:var(--bg);padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;font-size:13px">
+        <span>Estimated Margin / Profit:</span>
+        <b>{{ getProfit() | currencyLkr }} <span class="mut">({{ getMarginPct() }}%)</span></b>
+      </div>
+
+      <!-- Stock Quantity -->
+      <label style="display:flex;flex-direction:column;font-size:12px;font-weight:600;gap:4px">
+        <span>Stock Quantity</span>
+        <input type="number" [(ngModel)]="item.stock" min="0" placeholder="0" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+      </label>
+
+      <!-- Track IMEI Checkbox -->
+      <div style="display:flex;align-items:center;margin-top:18px">
+        <label class="ck" style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <input type="checkbox" [(ngModel)]="item.trackImei" />
+          Track Serial / IMEI Number
+        </label>
+      </div>
+    </div>
+
+    <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn alt" (click)="cancelled.emit()">Cancel</button>
+      <button class="btn" (click)="submitForm()">Save Item</button>
+    </div>
+  </div>
+</div>

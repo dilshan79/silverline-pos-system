@@ -1,0 +1,80 @@
+<div class="hd">
+  <h2>📊 Owner Dashboard</h2>
+  <div>
+    <button class="btn alt">Today</button>
+    <button class="btn alt" style="margin-left:6px">All Locations</button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="mut" style="padding:20px">Loading dashboard…</div>
+
+<div class="grid kpi">
+  <div class="card"><span class="mut">Today's sales</span><b>{{ todaySales }}</b></div>
+  <div class="card"><span class="mut">Cash in hand</span><b>{{ cashInHand }}</b></div>
+  <div class="card"><span class="mut">Gross profit</span><b>{{ grossProfit }}</b></div>
+  <div class="card"><span class="mut">Jobs in pool</span><b>{{ jobsInPool }}</b></div>
+  <div class="card"><span class="mut">Low stock items</span><b>{{ lowStock }}</b></div>
+  <div class="card"><span class="mut">Cheques due</span><b>{{ chequesDue }}</b></div>
+</div>
+
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:12px">
+
+  <div class="card">
+    <b>Sales – 7 days</b>
+    <div class="bars" style="margin-top:14px">
+      <div *ngFor="let h of weekBars; let i = index" [style.height.%]="h">
+        <small>{{ weekDays[i] }}</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <b>Needs attention</b>
+    <div class="line" *ngFor="let a of attentionItems">
+      <span>{{ a.label }}</span>
+      <span class="bd" [ngClass]="a.cls">{{ a.badge }}</span>
+    </div>
+    <p *ngIf="attentionItems.length === 0" class="mut">All clear ✓</p>
+  </div>
+
+  <div class="card">
+    <b>By location</b>
+    <div class="tw">
+      <table>
+        <tr><th>Location</th><th>Sales</th></tr>
+        <tr *ngFor="let loc of locationStats">
+          <td>{{ loc.name }}</td><td>Rs {{ loc.sales }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" *ngIf="recentSales.length > 0">
+    <b>Recent Sales</b>
+    <div class="tw">
+      <table>
+        <tr><th>Invoice</th><th>Customer</th><th>Total</th></tr>
+        <tr *ngFor="let s of recentSales">
+          <td><strong>{{ s.invoice_no }}</strong></td>
+          <td>{{ s.customer }}</td>
+          <td>Rs {{ s.total | number }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" *ngIf="lowStockItems.length > 0">
+    <b>⚠ Low Stock Alerts</b>
+    <div class="tw">
+      <table>
+        <tr><th>Item</th><th>Stock</th></tr>
+        <tr *ngFor="let i of lowStockItems">
+          <td>{{ i.name }}</td>
+          <td><span class="bd r">{{ i.stock }}</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+

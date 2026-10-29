@@ -1,0 +1,83 @@
+<div class="card">
+  <div class="hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <div>
+      <h3 style="margin:0 0 4px">Category Master</h3>
+      <p class="mut" style="margin:0;font-size:13px">Manage top-level item categories displayed on POS terminal and inventory</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input type="text" [(ngModel)]="searchTerm" (input)="applyFilter()" placeholder="Search category…" style="min-width:220px;padding:8px 12px">
+      <button class="btn" (click)="openCreate()">+ Add Category</button>
+    </div>
+  </div>
+
+  <div *ngIf="successMsg" class="alert-success" style="padding:10px 14px;background:#e6f4ea;color:#137333;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✓ {{ successMsg }}
+  </div>
+
+  <div *ngIf="errorMsg" class="alert-danger" style="padding:10px 14px;background:#fce8e6;color:#c5221f;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✕ {{ errorMsg }}
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px">#</th>
+          <th>Category Name</th>
+          <th>Description</th>
+          <th style="text-align:center">Subcategories</th>
+          <th style="text-align:center">Items</th>
+          <th style="text-align:right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cat of filteredCategories; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>
+            <strong>{{ cat.name }}</strong>
+          </td>
+          <td class="mut">{{ cat.description || '—' }}</td>
+          <td style="text-align:center">
+            <span class="bd" [class.g]="(cat.subcategory_count || 0) > 0">{{ cat.subcategory_count || 0 }} subcats</span>
+          </td>
+          <td style="text-align:center">
+            <span class="bd" [class.g]="(cat.item_count || 0) > 0">{{ cat.item_count || 0 }} items</span>
+          </td>
+          <td style="text-align:right">
+            <button class="btn alt" style="margin-right:6px;padding:4px 10px;font-size:12px" (click)="openEdit(cat)">Edit</button>
+            <button class="btn red" style="padding:4px 10px;font-size:12px" (click)="deleteCategory(cat)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredCategories.length === 0 && !loading">
+          <td colspan="6" style="text-align:center;padding:24px" class="mut">No categories found matching your search.</td>
+        </tr>
+        <tr *ngIf="loading">
+          <td colspan="6" style="text-align:center;padding:24px" class="mut">Loading categories…</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Category Modal -->
+<div class="dlg-backdrop" *ngIf="showModal" (click)="closeModal()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()" style="max-width:440px">
+    <h3>{{ editingCategory.id ? 'Edit Category' : 'New Category' }}</h3>
+    <div class="fg" style="display:flex;flex-direction:column;gap:12px;margin:16px 0">
+      <label>
+        Category Name *
+        <input type="text" [(ngModel)]="editingCategory.name" placeholder="e.g. Smart Watches, Audio" autofocus />
+      </label>
+      <label>
+        Description
+        <textarea [(ngModel)]="editingCategory.description" rows="3" placeholder="Category notes or product types covered" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--bd)"></textarea>
+      </label>
+    </div>
+    <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn alt" (click)="closeModal()" [disabled]="isSaving">Cancel</button>
+      <button class="btn" (click)="saveCategory()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving…' : 'Save Category' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<div class="hd">
+  <h2>Return / exchange</h2>
+  <div>
+    <button class="btn acc" (click)="processReturn()">Process return</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="fg">
+    <label>
+      Find by invoice / IMEI / phone
+      <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchInvoice()" placeholder="Search invoice, IMEI or phone…">
+    </label>
+    <label>
+      Type
+      <select [(ngModel)]="returnType">
+        <option>Customer return</option>
+        <option>Exchange</option>
+        <option>Warranty claim</option>
+        <option>Supplier RMA</option>
+      </select>
+    </label>
+    <label>
+      Reason
+      <select [(ngModel)]="returnReason">
+        <option>Faulty</option>
+        <option>Wrong item</option>
+        <option>Changed mind</option>
+      </select>
+    </label>
+    <label>
+      Refund method
+      <select [(ngModel)]="refundMethod">
+        <option>Cash</option>
+        <option>Card</option>
+        <option>Credit note</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <b>Original sale</b>
+  <div class="tw" style="margin-top:8px">
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice</th>
+          <th>Date</th>
+          <th>Item</th>
+          <th>IMEI</th>
+          <th>Price</th>
+          <th>Warranty</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let sale of originalSales">
+          <td>{{ sale.invoice }}</td>
+          <td>{{ sale.date }}</td>
+          <td>{{ sale.item }}</td>
+          <td>{{ sale.imei }}</td>
+          <td>{{ sale.price | currencyLkr }}</td>
+          <td><span class="bd g">{{ sale.warranty }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <p class="mut" style="margin:0">Return restocks the IMEI (or sends it to RMA), reverses payment and posts a credit note.</p>
+</div>

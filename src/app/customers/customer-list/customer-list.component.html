@@ -1,0 +1,27 @@
+<div class="card">
+  <h3>Customer Directory</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Loyalty Points</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of customers">
+          <td><strong>{{ c.name }}</strong></td>
+          <td>{{ c.phone }}</td>
+          <td>{{ c.email }}</td>
+          <td><span class="bd b">{{ c.loyaltyPoints }} pts</span></td>
+          <td>
+            <button class="btn alt" (click)="select(c)">360° Profile</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

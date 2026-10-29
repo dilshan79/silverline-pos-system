@@ -1,0 +1,53 @@
+<div class="card">
+  <h3>Accounts Receivable (AR) Aging</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Current</th>
+          <th>1-30 Days</th>
+          <th>31-60 Days</th>
+          <th>90+ Days</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of receivables">
+          <td>{{ r.entity }}</td>
+          <td>{{ r.current | currencyLkr }}</td>
+          <td>{{ r.days30 | currencyLkr }}</td>
+          <td>{{ r.days60 | currencyLkr }}</td>
+          <td>{{ r.days90Plus | currencyLkr }}</td>
+          <td><strong>{{ r.total | currencyLkr }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top: 24px;">Accounts Payable (AP) Aging</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Supplier</th>
+          <th>Current</th>
+          <th>1-30 Days</th>
+          <th>31-60 Days</th>
+          <th>90+ Days</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of payables">
+          <td>{{ p.entity }}</td>
+          <td>{{ p.current | currencyLkr }}</td>
+          <td>{{ p.days30 | currencyLkr }}</td>
+          <td>{{ p.days60 | currencyLkr }}</td>
+          <td>{{ p.days90Plus | currencyLkr }}</td>
+          <td><strong>{{ p.total | currencyLkr }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

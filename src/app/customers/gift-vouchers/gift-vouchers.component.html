@@ -1,0 +1,25 @@
+<div class="card">
+  <h3>Gift Vouchers & Coupons</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Voucher Code</th>
+          <th>Value</th>
+          <th>Issue Date</th>
+          <th>Expiry Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let gv of vouchers">
+          <td>{{ gv.code }}</td>
+          <td>{{ gv.amount | currencyLkr }}</td>
+          <td>{{ gv.issueDate }}</td>
+          <td>{{ gv.expiryDate }}</td>
+          <td><app-status-badge [status]="gv.status"></app-status-badge></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

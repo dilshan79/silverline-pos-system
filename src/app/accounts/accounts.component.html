@@ -1,0 +1,15 @@
+<div>
+  <div class="tabs">
+    <button class="chip" [class.on]="activeTab === 'ledgers'" (click)="activeTab = 'ledgers'">General Ledgers</button>
+    <button class="chip" [class.on]="activeTab === 'aging'" (click)="activeTab = 'aging'">AR / AP Aging</button>
+    <button class="chip" [class.on]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">Journal Vouchers</button>
+    <button class="chip" [class.on]="activeTab === 'cheques'" (click)="activeTab = 'cheques'">Cheque Management</button>
+    <button class="chip" [class.on]="activeTab === 'bank'" (click)="activeTab = 'bank'">Bank Reconciliation</button>
+  </div>
+
+  <app-ledgers *ngIf="activeTab === 'ledgers'"></app-ledgers>
+  <app-ar-ap-aging *ngIf="activeTab === 'aging'"></app-ar-ap-aging>
+  <app-vouchers *ngIf="activeTab === 'vouchers'"></app-vouchers>
+  <app-cheques *ngIf="activeTab === 'cheques'"></app-cheques>
+  <app-bank-reconcile *ngIf="activeTab === 'bank'"></app-bank-reconcile>
+</div>

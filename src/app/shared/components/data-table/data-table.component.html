@@ -1,0 +1,44 @@
+<div class="dt-wrapper">
+  <div class="dt-toolbar" *ngIf="searchKey">
+    <input
+      type="search"
+      [(ngModel)]="search"
+      (ngModelChange)="applyFilter()"
+      placeholder="Search…"
+      class="sr"
+    />
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th *ngFor="let col of columns">{{ col.label }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading">
+          <td [attr.colspan]="columns.length" class="dt-loading">Loading…</td>
+        </tr>
+        <tr *ngIf="!loading && filtered.length === 0">
+          <td [attr.colspan]="columns.length" class="dt-empty">No records found.</td>
+        </tr>
+        <tr *ngFor="let row of filtered">
+          <td *ngFor="let col of columns">
+            <ng-container [ngSwitch]="col.type">
+              <span
+                *ngSwitchCase="'badge'"
+                class="bd"
+                [ngClass]="col.badgeMap ? col.badgeMap[getValue(row, col.key)] : ''"
+              >{{ getValue(row, col.key) }}</span>
+              <span *ngSwitchCase="'currency'">
+                {{ getValue(row, col.key) | currencyLkr }}
+              </span>
+              <span *ngSwitchDefault>{{ getValue(row, col.key) }}</span>
+            </ng-container>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

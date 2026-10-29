@@ -1,0 +1,15 @@
+<div>
+  <div class="tabs">
+    <button class="chip" [class.on]="activeTab === 'job-pool'" (click)="activeTab = 'job-pool'">Job Pool</button>
+    <button class="chip" [class.on]="activeTab === 'new-job'" (click)="activeTab = 'new-job'">+ New Job Ticket</button>
+    <button class="chip" [class.on]="activeTab === 'job-detail'" (click)="activeTab = 'job-detail'">Job Detail</button>
+    <button class="chip" [class.on]="activeTab === 'repairs'" (click)="activeTab = 'repairs'">Repairs Tracking</button>
+    <button class="chip" [class.on]="activeTab === 'tech'" (click)="activeTab = 'tech'">Technician Portal</button>
+  </div>
+
+  <app-job-pool *ngIf="activeTab === 'job-pool'" (selected)="viewJobDetail($event)"></app-job-pool>
+  <app-new-job *ngIf="activeTab === 'new-job'"></app-new-job>
+  <app-job-detail *ngIf="activeTab === 'job-detail'" [jobNo]="selectedJobNo"></app-job-detail>
+  <app-repairs *ngIf="activeTab === 'repairs'"></app-repairs>
+  <app-technician-app *ngIf="activeTab === 'tech'"></app-technician-app>
+</div>

@@ -1,0 +1,12 @@
+<div>
+  <div class="tabs" style="margin-bottom:12px">
+    <button class="chip" [class.on]="activeReport === 'sales'" (click)="activeReport = 'sales'">📊 Sales Summary</button>
+    <button class="chip" [class.on]="activeReport === 'inventory'" (click)="activeReport = 'inventory'">📦 Inventory & Stock</button>
+    <button class="chip" [class.on]="activeReport === 'pnl'" (click)="activeReport = 'pnl'">💰 Profit & Loss</button>
+    <button class="chip" [class.on]="activeReport === 'tax'" (click)="activeReport = 'tax'">🧾 Tax & VAT Report</button>
+    <button class="chip" [class.on]="activeReport === 'top-items'" (click)="activeReport = 'top-items'">⭐ Top Selling Items</button>
+  </div>
+
+  <app-report-filter (filterApplied)="onFilterApplied($event)"></app-report-filter>
+  <app-report-viewer [reportType]="activeReport" [filter]="filterDates"></app-report-viewer>
+</div>

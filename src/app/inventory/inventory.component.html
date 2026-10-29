@@ -1,0 +1,19 @@
+<div>
+  <div class="tabs">
+    <button class="chip" [class.on]="activeTab === 'items'" (click)="activeTab = 'items'">Items & Catalog</button>
+    <button class="chip" [class.on]="activeTab === 'categories'" (click)="activeTab = 'categories'">Categories</button>
+    <button class="chip" [class.on]="activeTab === 'subcategories'" (click)="activeTab = 'subcategories'">Subcategories</button>
+    <button class="chip" [class.on]="activeTab === 'stock-balance'" (click)="activeTab = 'stock-balance'">Stock Balance</button>
+    <button class="chip" [class.on]="activeTab === 'imei-lookup'" (click)="activeTab = 'imei-lookup'">IMEI Lookup</button>
+    <button class="chip" [class.on]="activeTab === 'stock-count'" (click)="activeTab = 'stock-count'">Stock Count</button>
+    <button class="chip" [class.on]="activeTab === 'transfer'" (click)="activeTab = 'transfer'">Transfer of Goods</button>
+  </div>
+
+  <app-items *ngIf="activeTab === 'items'"></app-items>
+  <app-categories *ngIf="activeTab === 'categories'"></app-categories>
+  <app-subcategories *ngIf="activeTab === 'subcategories'"></app-subcategories>
+  <app-stock-balance *ngIf="activeTab === 'stock-balance'"></app-stock-balance>
+  <app-imei-lookup *ngIf="activeTab === 'imei-lookup'"></app-imei-lookup>
+  <app-stock-count *ngIf="activeTab === 'stock-count'"></app-stock-count>
+  <app-transfer-of-goods *ngIf="activeTab === 'transfer'"></app-transfer-of-goods>
+</div>

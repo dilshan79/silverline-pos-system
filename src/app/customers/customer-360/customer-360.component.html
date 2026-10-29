@@ -1,0 +1,12 @@
+<div class="card">
+  <div class="hd">
+    <h3>Customer 360° Profile: {{ customer?.name }}</h3>
+    <span class="bd b">{{ customer?.loyaltyPoints }} Loyalty Points</span>
+  </div>
+  <div class="fg">
+    <div><strong>Phone:</strong> {{ customer?.phone }}</div>
+    <div><strong>Email:</strong> {{ customer?.email }}</div>
+    <div><strong>Credit Limit:</strong> {{ customer?.creditLimit | currencyLkr }}</div>
+    <div><strong>Outstanding Credit:</strong> {{ customer?.outstanding | currencyLkr }}</div>
+  </div>
+</div>

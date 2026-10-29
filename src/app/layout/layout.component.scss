@@ -1,0 +1,33 @@
+/* Make sidebar a flex column so logout is pushed to bottom */
+:host {
+  display: contents;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+nav > ng-container {
+  flex-shrink: 0;
+}
+
+/* Hover effect on nav buttons */
+nav button:not(.on):hover {
+  background: rgba(255,255,255,0.08);
+}
+
+/* Active route indicator */
+nav button.on {
+  background: var(--pri);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Main content area */
+main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}

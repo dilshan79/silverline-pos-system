@@ -1,0 +1,176 @@
+<div class="card">
+  <!-- Title and Actions -->
+  <div class="hd" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h3 style="margin:0 0 4px">IMEI & Serial Number Lifecycle Tracking</h3>
+      <p class="mut" style="margin:0;font-size:13px">Search, verify warranty status, location, and invoice history for serialized devices</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" (click)="openAddModal()">+ Register / Inward IMEI</button>
+      <button class="btn alt" (click)="loadImeis()">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <!-- Big Quick Search / Barcode Scan Box -->
+  <div style="background:var(--bg);padding:14px;border-radius:8px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px;position:relative">
+      <input type="text" [(ngModel)]="searchTerm" (input)="onFilterChange()" placeholder="🔍 Scan barcode or type 15-digit IMEI / Serial number…" style="width:100%;padding:10px 14px;font-size:15px;border-radius:6px;border:1px solid var(--bd);letter-spacing:0.5px">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select [(ngModel)]="selectedStatus" (change)="onFilterChange()" style="padding:10px 12px;border-radius:6px;border:1px solid var(--bd)">
+        <option value="All">All Statuses</option>
+        <option value="In Stock">In Stock</option>
+        <option value="Sold">Sold (Invoiced)</option>
+        <option value="RMA">RMA / Warranty</option>
+        <option value="Transferred">Transferred</option>
+      </select>
+      <select [(ngModel)]="selectedLocation" (change)="onFilterChange()" style="padding:10px 12px;border-radius:6px;border:1px solid var(--bd)">
+        <option value="All">All Branches</option>
+        <option *ngFor="let loc of locations" [value]="loc.code">{{ loc.name }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Selected IMEI Deep Detail Card (if an IMEI is selected or scanned) -->
+  <div *ngIf="selectedImeiDetail" class="detail-banner" style="background:#f8f9fa;border:1px solid #dadce0;border-left:5px solid var(--pri);border-radius:8px;padding:16px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+      <div>
+        <span class="mut" style="font-size:12px;text-transform:uppercase;font-weight:600">IMEI / Serial Number:</span>
+        <div style="font-size:20px;font-weight:bold;color:var(--pri);letter-spacing:1px;margin:2px 0 6px">
+          {{ selectedImeiDetail.imei_number }}
+        </div>
+        <div style="font-size:14px;font-weight:600">{{ selectedImeiDetail.item_name }} ({{ selectedImeiDetail.item_code }})</div>
+      </div>
+      <div style="text-align:right">
+        <span class="bd" [ngClass]="{
+          'g': selectedImeiDetail.status === 'In Stock',
+          'b': selectedImeiDetail.status === 'Sold',
+          'y': selectedImeiDetail.status === 'RMA',
+          'p': selectedImeiDetail.status === 'Transferred'
+        }" style="font-size:14px;padding:4px 12px;font-weight:bold">
+          {{ selectedImeiDetail.status }}
+        </span>
+        <div class="mut" style="font-size:12px;margin-top:4px">Branch: <b>{{ selectedImeiDetail.location_code }}</b></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:12px;margin-top:14px;padding-top:12px;border-top:1px dashed #ccc;font-size:13px">
+      <div><span class="mut">Category:</span> <b>{{ selectedImeiDetail.category || 'Phones' }}</b></div>
+      <div><span class="mut">Subcategory:</span> <b>{{ selectedImeiDetail.subcategory || 'Smartphones' }}</b></div>
+      <div><span class="mut">Retail Value:</span> <b>{{ selectedImeiDetail.price | currencyLkr }}</b></div>
+      <div><span class="mut">Sold Invoice:</span> <b [style.color]="selectedImeiDetail.sold_invoice_no ? 'var(--pri)' : 'inherit'">{{ selectedImeiDetail.sold_invoice_no || 'Not Sold (In Stock)' }}</b></div>
+      <div><span class="mut">Received Date:</span> <b>{{ selectedImeiDetail.created_at | date:'yyyy-MM-dd HH:mm' }}</b></div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMsg" class="alert-success" style="padding:10px 14px;background:#e6f4ea;color:#137333;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✓ {{ successMsg }}
+  </div>
+
+  <div *ngIf="errorMsg" class="alert-danger" style="padding:10px 14px;background:#fce8e6;color:#c5221f;border-radius:6px;margin-bottom:14px;font-size:13px;font-weight:500">
+    ✕ {{ errorMsg }}
+  </div>
+
+  <!-- IMEI Master Table -->
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>IMEI / Serial Number</th>
+          <th>Model / Product Name</th>
+          <th>Code</th>
+          <th>Branch</th>
+          <th style="text-align:center">Current Status</th>
+          <th>Sold Invoice No</th>
+          <th>Inward Date</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let im of filteredImeis" (click)="selectImei(im)" style="cursor:pointer" [class.selected-row]="selectedImeiDetail?.id === im.id">
+          <td>
+            <strong style="color:var(--pri);letter-spacing:0.5px">{{ im.imei_number }}</strong>
+          </td>
+          <td>{{ im.item_name || '—' }}</td>
+          <td><span class="bd" style="font-size:11px">{{ im.item_code }}</span></td>
+          <td><b>{{ im.location_code }}</b></td>
+          <td style="text-align:center">
+            <span class="bd" [ngClass]="{
+              'g': im.status === 'In Stock',
+              'b': im.status === 'Sold',
+              'y': im.status === 'RMA',
+              'p': im.status === 'Transferred'
+            }" style="font-size:12px;font-weight:600">
+              {{ im.status }}
+            </span>
+          </td>
+          <td>
+            <span *ngIf="im.sold_invoice_no" style="font-weight:600;color:var(--pri)">{{ im.sold_invoice_no }}</span>
+            <span *ngIf="!im.sold_invoice_no" class="mut">—</span>
+          </td>
+          <td class="mut">{{ im.created_at | date:'yyyy-MM-dd' }}</td>
+          <td style="text-align:right" (click)="$event.stopPropagation()">
+            <select (change)="updateImeiStatus(im, $any($event.target).value)" [value]="im.status" style="padding:3px 6px;font-size:11px;border-radius:4px;border:1px solid var(--bd)">
+              <option value="In Stock">In Stock</option>
+              <option value="Sold">Sold</option>
+              <option value="RMA">RMA / Defect</option>
+              <option value="Transferred">Transferred</option>
+            </select>
+          </td>
+        </tr>
+        <tr *ngIf="filteredImeis.length === 0 && !loading">
+          <td colspan="8" style="text-align:center;padding:24px" class="mut">No IMEI records found matching your search.</td>
+        </tr>
+        <tr *ngIf="loading">
+          <td colspan="8" style="text-align:center;padding:24px" class="mut">Loading IMEI records…</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Inward / Register IMEI -->
+<div class="dlg-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()" style="max-width:480px">
+    <h3>Register / Inward New IMEI</h3>
+    <p class="mut" style="font-size:13px;margin:0 0 14px">Inward new serialized device into stock inventory</p>
+
+    <div class="fg" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      <label>
+        Select Phone / Serialized Item *
+        <select [(ngModel)]="newImei.item_code" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+          <option *ngFor="let it of trackedItems" [value]="it.code">{{ it.name }} ({{ it.code }})</option>
+        </select>
+      </label>
+
+      <label>
+        IMEI / Serial Number (15 digits) *
+        <input type="text" [(ngModel)]="newImei.imei_number" placeholder="e.g. 864201058291009" maxlength="30" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);letter-spacing:1px" autofocus />
+      </label>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label>
+          Branch Location
+          <select [(ngModel)]="newImei.location_code" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+            <option *ngFor="let loc of locations" [value]="loc.code">{{ loc.name }}</option>
+          </select>
+        </label>
+        <label>
+          Initial Status
+          <select [(ngModel)]="newImei.status" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+            <option value="In Stock">In Stock</option>
+            <option value="RMA">RMA / Damaged</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn alt" (click)="closeAddModal()" [disabled]="isSaving">Cancel</button>
+      <button class="btn" (click)="saveImeiRecord()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving…' : 'Save IMEI' }}
+      </button>
+    </div>
+  </div>
+</div>

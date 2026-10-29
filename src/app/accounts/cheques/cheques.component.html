@@ -1,0 +1,25 @@
+<div class="card">
+  <h3>Post-Dated Cheques Management</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Cheque No</th>
+          <th>Bank</th>
+          <th>Amount</th>
+          <th>Due Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let chq of cheques">
+          <td>{{ chq.chequeNo }}</td>
+          <td>{{ chq.bank }}</td>
+          <td>{{ chq.amount | currencyLkr }}</td>
+          <td>{{ chq.dueDate }}</td>
+          <td><app-status-badge [status]="chq.status"></app-status-badge></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

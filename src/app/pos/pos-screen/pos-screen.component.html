@@ -1,53 +1,70 @@
 <div class="posbar">
-  <div><span class="mut">Terminal</span><b>#1</b></div>
-  <div><span class="mut">Location</span><b>MW – Bravo Bus Stand</b></div>
-  <div><span class="mut">Cashier</span><b>Rashmika</b></div>
-  <div><span class="mut">Salesman</span><select><option>N/D</option><option>Kasun</option></select></div>
-  <div><span class="mut">Invoice No</span><b>INMW1000014</b></div>
-  <div><span class="mut">Customer</span><select><option>Cash Customer</option><option>+ Add / Search</option></select></div>
+  <div><span class="mut">Location</span><b [title]="location">{{ location }}</b></div>
+  <div class="user-chip" [title]="'Logged in as ' + username">
+    <span class="mut">{{ userRole || 'User' }}</span><b>{{ cashier || 'Not logged in' }}</b>
+  </div>
+  <div><span class="mut">Invoice No</span><b style="color:var(--pri);font-size:14px;letter-spacing:0.5px">{{ currentInvoiceNo }}</b></div>
+  <div>
+    <span class="mut">Customer</span>
+    <select [(ngModel)]="selectedCustomer" style="font-weight:600;background:transparent;border:1px solid var(--bd);border-radius:4px;padding:1px 4px;color:inherit;font-size:12px;cursor:pointer">
+      <option *ngFor="let c of customerList" [value]="c">{{ c }}</option>
+    </select>
+  </div>
+  <div *ngIf="canViewCashInHand" class="cash-chip" [class.no-float]="!cashSession" (click)="cashSession ? openCloseCash() : openFloat()"
+       [title]="cashSession ? 'Click to close cash' : 'Click to enter float cash'">
+    <span class="mut">Cash in hand</span>
+    <b *ngIf="cashSession">{{ cashSession.expected_cash | currencyLkr }}</b>
+    <b *ngIf="!cashSession">No float</b>
+  </div>
   <div style="margin-left:auto"><span class="mut" id="clk">{{ currentDateTime | date:'yyyy-MM-dd HH:mm:ss' }}</span></div>
 </div>
 
 <div class="two" style="margin-top:10px">
   <div>
-    <input style="width:100%" [(ngModel)]="searchText" (keyup.enter)="onSearchEnter()" placeholder="Scan barcode / IMEI / PLU / suspended bill or search item…">
-    <div class="tabs">
-      <button class="chip on">Phones</button>
-      <button class="chip">Accessories</button>
-      <button class="chip">Services</button>
+    <input id="pos-search-input" #posSearchInput style="width:100%" [(ngModel)]="searchText" (keyup.enter)="onSearchEnter()" placeholder="Scan barcode / IMEI / PLU or search item…" autofocus>
+    <div *ngIf="pendingPrice !== null" class="pending-price">
+      New price {{ pendingPrice | currencyLkr }} will be used for the next item you add.
+      <button class="btn-void-line" (click)="cancelNewPrice()" title="Cancel new price">✕</button>
+    </div>
+    <div class="tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
+      <button *ngFor="let cat of posCategories" class="chip" [class.on]="activeCategory === cat" (click)="activeCategory = cat">{{ cat }}</button>
     </div>
 
     <div class="grid prod">
-      <div *ngFor="let item of items; let i = index" class="card p" (click)="addToCart(i)">
-        <i></i>
-        <div>{{ item.name }}</div>
-        <b>{{ item.price | currencyLkr }}</b><br>
-        <span class="bd" [ngClass]="item.stock < 3 ? 'r' : 'g'">
-          {{ item.stock < 3 ? 'Low ' + item.stock : 'In stock' }}
-        </span>
-      </div>
-      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Light Bill</div><b>Express</b></div>
-      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Water Bill</div><b>Express</b></div>
-      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Thoga Card</div><b>Express</b></div>
-      <div class="card p" style="border:1px dashed var(--bd)"><i></i><div>Dialog 4G Antenna Fix</div><b>Service</b></div>
+      <ng-container *ngFor="let item of items; let i = index">
+        <div *ngIf="matchesFilter(item)" class="card p" (click)="addToCart(i)">
+          <i></i>
+          <div>{{ item.name }}</div>
+          <div *ngIf="item.subcategory" style="font-size:11px;color:var(--mut);margin-bottom:2px">{{ item.subcategory }}</div>
+          <b>{{ item.price | currencyLkr }}</b><br>
+          <span class="bd" [ngClass]="item.stock < 3 ? 'r' : 'g'">
+            {{ item.stock < 3 ? 'Low ' + item.stock : 'In stock' }}
+          </span>
+        </div>
+      </ng-container>
+      <div *ngIf="activeCategory === 'Phones' || activeCategory === 'Bill Payments'" class="card p" style="border:1px dashed var(--bd)"><i></i><div>Light Bill</div><b>Express</b></div>
+      <div *ngIf="activeCategory === 'Phones' || activeCategory === 'Bill Payments'" class="card p" style="border:1px dashed var(--bd)"><i></i><div>Water Bill</div><b>Express</b></div>
+      <div *ngIf="activeCategory === 'Phones' || activeCategory === 'Reload / Cards'" class="card p" style="border:1px dashed var(--bd)"><i></i><div>Thoga Card</div><b>Express</b></div>
+      <div *ngIf="activeCategory === 'Phones' || activeCategory === 'Dialog TV Services'" class="card p" style="border:1px dashed var(--bd)"><i></i><div>Dialog 4G Antenna Fix</div><b>Service</b></div>
     </div>
 
     <b style="display:block;margin:14px 0 6px">Functions</b>
     <div class="fbar">
+      <button class="fb" (click)="openCashierReports()" style="background:var(--pri);color:#fff;font-weight:bold" title="Open Cashier Reports Menu">Reports</button>
       <button class="fb" (click)="suspendBill()" title="Save this bill and print a slip with barcode">Suspend</button>
       <button class="fb" (click)="openRecall()" title="Recall a suspended bill">Recall</button>
       <button class="fb" (click)="voidSelectedItem()" style="background:var(--bad);color:#fff">Void</button>
-      <button class="fb">Return</button>
       <button class="fb">No Sale</button>
-      <button class="fb">Discount</button>
-      <button class="fb">Discount Type</button>
-      <button class="fb">New Price</button>
-      <button class="fb">Copy Line</button>
+      <button class="fb" (click)="openDiscount()" title="Discount the selected item, or the sub total when no item is selected">Discount</button>
+      <button class="fb" (click)="toggleDiscountType()" title="Switch between percentage and amount">Discount Type: {{ discountType === 'pct' ? '%' : 'Rs' }}</button>
+      <button class="fb" (click)="applyNewPrice()" title="Type a price in the scan field, click here, then add the item">New Price</button>
+      <button class="fb" (click)="copyLine()" title="Reprint a bill copy. Empty scan field: last bill. Or type a bill number, or YYYY.MM.DD.number">Copy Line</button>
       <button class="fb" (click)="voidSelectedItem()">Remove</button>
       <button class="fb">Seek</button>
-      <button class="fb">Float Cash</button>
-      <button class="fb">Paid In</button>
-      <button class="fb">Paid Out</button>
+      <button class="fb" (click)="openFloat()" title="Enter or add cash float in the drawer">Float Cash</button>
+      <button class="fb" (click)="openCloseCash()" title="End of shift: cash in hand, count and close">Close Cash</button>
+      <button class="fb" (click)="openPaidIn()" title="Cash paid into drawer / till replenishment">Paid In</button>
+      <button class="fb" (click)="openPaidOut()" title="Petty cash disbursements paid out of drawer">Paid Out</button>
       <button class="fb">Print On</button>
     </div>
   </div>
@@ -65,7 +82,12 @@
            (click)="selectCartItem(entry.itemIndex)">
         <div style="display:flex;flex-direction:column;flex:1">
           <span style="font-weight:600">{{ entry.item.name }}</span>
-          <small class="mut">{{ entry.item.price | currencyLkr }} each</small>
+          <small class="mut">
+            {{ entry.price | currencyLkr }} each
+            <span *ngIf="entry.priceOverride" class="new-price-tag" [title]="'Normal price ' + entry.item.price">new price</span>
+          </small>
+          <small *ngIf="entry.imei" style="color:var(--pri);font-weight:600;font-size:11px">IMEI: {{ entry.imei }}</small>
+          <small *ngIf="entry.discount > 0" class="line-disc">Discount {{ entry.discountLabel }}: -{{ entry.discount | currencyLkr }}</small>
         </div>
         <div style="display:flex;align-items:center;gap:4px">
           <button class="btn-qty" (click)="decreaseQty(entry.itemIndex, $event)">-</button>
@@ -80,7 +102,12 @@
       <p *ngIf="getCartEntries().length === 0" class="mut" style="text-align:center;padding:20px 0">Tap a product to add it.</p>
     </div>
 
-    <div class="line"><span>Sub total</span><span>{{ getCartTotal() | currencyLkr }}</span></div>
+    <div class="line subtotal-row" (click)="openBillDiscount()" title="Click to discount the sub total">
+      <span>Sub total</span><span>{{ getSubTotal() | currencyLkr }}</span>
+    </div>
+    <div *ngIf="getBillDiscount() > 0" class="line line-disc" (click)="openBillDiscount()" style="cursor:pointer">
+      <span>Discount {{ discountLabel(billDiscount) }}</span><span>-{{ getBillDiscount() | currencyLkr }}</span>
+    </div>
     <div class="total"><span>Net value</span><span>{{ getCartTotal() | currencyLkr }}</span></div>
 
     <div class="fg" style="grid-template-columns:1fr 1fr;margin:4px 0 10px">
@@ -98,27 +125,38 @@
     </div>
 
     <b class="mut">Pay with</b>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px">
-      <button class="btn alt" style="flex:1" (click)="openKeypad()">💵 Cash</button>
-      <button class="btn alt" style="flex:1">Cheque</button>
-      <button class="btn alt" style="flex:1">Credit</button>
-      <button class="btn alt" style="flex:1">Split</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 6px">
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Cash'" (click)="selectPaymentMethod('Cash')" style="flex:1">💵 Cash</button>
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Cheque'" (click)="selectPaymentMethod('Cheque')" style="flex:1">Cheque</button>
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Credit'" (click)="selectPaymentMethod('Credit')" style="flex:1">Credit</button>
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Split'" (click)="selectPaymentMethod('Split')" style="flex:1">Split</button>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
-      <button class="btn alt" style="flex:1">💳 Visa</button>
-      <button class="btn alt" style="flex:1">💳 MasterCard</button>
-      <button class="btn alt" style="flex:1">💳 Amex</button>
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Visa'" (click)="selectPaymentMethod('Visa')" style="flex:1">💳 Visa</button>
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'MasterCard'" (click)="selectPaymentMethod('MasterCard')" style="flex:1">💳 MasterCard</button>
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Amex'" (click)="selectPaymentMethod('Amex')" style="flex:1">💳 Amex</button>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
-      <button class="btn alt" style="flex:1">🎁 Gift Voucher</button>
-      <button class="btn alt" style="flex:1">⭐ Loyalty</button>
-      <button class="btn alt" style="flex:1">Credit Note</button>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Gift Voucher'" (click)="selectPaymentMethod('Gift Voucher')" style="flex:1">🎁 Voucher</button>
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Loyalty'" (click)="selectPaymentMethod('Loyalty')" style="flex:1">⭐ Loyalty</button>
+      <button class="btn alt" [class.on]="selectedPaymentMethod === 'Credit Note'" (click)="selectPaymentMethod('Credit Note')" style="flex:1">Credit Note</button>
     </div>
 
-    <button class="btn acc" style="width:100%" (click)="checkout()">CHARGE / CASH</button>
+    <!-- Active Payment Details Bar -->
+    <div *ngIf="selectedPaymentMethod !== 'Cash'" class="payment-detail-chip">
+      <div>
+        <span>Method: <b style="color:var(--pri)">{{ selectedPaymentMethod }}</b></span>
+        <div *ngIf="getPaymentDetailSummary()" class="mut" style="font-size:11px;margin-top:2px">{{ getPaymentDetailSummary() }}</div>
+      </div>
+      <button class="btn alt" style="padding:2px 8px;font-size:11px" (click)="openPaymentDetailModal(selectedPaymentMethod)">Edit</button>
+    </div>
+
+    <button class="btn acc" style="width:100%" (click)="checkout()">
+      CHARGE / {{ selectedPaymentMethod | uppercase }}
+    </button>
     <div style="display:flex;gap:6px;margin-top:10px">
       <button class="btn red" style="flex:1" (click)="clearCart()">Cancel</button>
-      <button class="btn alt" style="flex:1">Log Off</button>
+      <button class="btn alt" style="flex:1" (click)="logOff()">Log Off</button>
     </div>
     <p class="mut" style="text-align:center;margin-top:10px">🖨 Slip printer: ON &nbsp;·&nbsp; 🌐 LAN &nbsp;·&nbsp; EN / SIN</p>
   </div>
@@ -210,5 +248,531 @@
       </div>
       <p *ngIf="suspendedBills.length === 0" class="mut" style="text-align:center;padding:16px 0">No suspended bills.</p>
     </div>
+  </div>
+</div>
+
+<!-- Discount Modal: selected item or sub total, percentage or amount -->
+<div class="keypad-modal-backdrop" *ngIf="showDiscount" (click)="closeDiscount()">
+  <div class="keypad-modal card discount-modal" (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0;font-size:16px">Discount</h3>
+      <button class="btn-close" (click)="closeDiscount()">✕</button>
+    </div>
+
+    <b class="mut">Apply to</b>
+    <div class="seg">
+      <button [class.on]="discountTarget === 'line'" [disabled]="selectedCartIndex === null"
+              (click)="setDiscountTarget('line')">Selected item</button>
+      <button [class.on]="discountTarget === 'bill'" (click)="setDiscountTarget('bill')">Sub total</button>
+    </div>
+    <div class="mut" style="margin:4px 0 10px">
+      {{ discountTargetName() }}: {{ discountBase() | currencyLkr }}
+    </div>
+
+    <b class="mut">Type</b>
+    <div class="seg">
+      <button [class.on]="discountType === 'pct'" (click)="setDiscountType('pct')">Percentage %</button>
+      <button [class.on]="discountType === 'amt'" (click)="setDiscountType('amt')">Amount Rs</button>
+    </div>
+
+    <input type="number" min="0" [(ngModel)]="discountInput" (keyup.enter)="applyDiscount()"
+           [placeholder]="discountType === 'pct' ? 'e.g. 10 for 10%' : 'e.g. 500 for Rs 500 off'"
+           style="width:100%;margin:10px 0 6px;font-size:18px" autofocus>
+
+    <div class="quick-presets" *ngIf="discountType === 'pct'">
+      <button class="chip" *ngFor="let p of [5, 10, 15, 20, 25]" (click)="discountInput = '' + p">{{ p }}%</button>
+    </div>
+
+    <div class="balance-box bg-success" style="margin-top:8px">
+      <span>Discount:</span>
+      <b class="balance-amount">-{{ discountPreview() | currencyLkr }}</b>
+    </div>
+    <div class="mut" style="margin-top:4px">After discount: {{ (discountBase() - discountPreview()) | currencyLkr }}</div>
+
+    <p *ngIf="discountError" class="disc-error">{{ discountError }}</p>
+
+    <div style="display:flex;gap:6px;margin-top:12px">
+      <button class="btn red" style="flex:1" (click)="removeDiscount()">Remove discount</button>
+      <button class="btn acc" style="flex:2" (click)="applyDiscount()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Float Cash Modal -->
+<div class="keypad-modal-backdrop" *ngIf="showFloat" (click)="closeCashModals()">
+  <div class="keypad-modal card denom-modal" (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0;font-size:16px;display:flex;align-items:center;gap:6px">
+        💵 {{ floatActionType === 'add' ? 'Add Cash to Drawer' : 'Float Cash' }} - Terminal {{ terminal }}
+      </h3>
+      <button class="btn-close" (click)="closeCashModals()">✕</button>
+    </div>
+
+    <!-- Toggle Action Type if shift is already open -->
+    <div class="seg" *ngIf="cashSession" style="margin-bottom:10px">
+      <button [class.on]="floatActionType === 'open'" (click)="floatActionType = 'open'">Correct Opening Float</button>
+      <button [class.on]="floatActionType === 'add'" (click)="floatActionType = 'add'">+ Add Cash / Top-Up Float</button>
+    </div>
+
+    <p class="mut" style="margin:0 0 10px;font-size:13px">
+      <ng-container *ngIf="!cashSession">Enter total float amount or enter note/coin counts below to open your shift drawer.</ng-container>
+      <ng-container *ngIf="cashSession && floatActionType === 'open'">Shift opened at {{ cashSession.opened_at | date:'HH:mm' }}. Saving updates the base opening float.</ng-container>
+      <ng-container *ngIf="cashSession && floatActionType === 'add'">Add cash / extra float into drawer mid-shift without altering opening float.</ng-container>
+    </p>
+
+    <!-- Reason field if adding cash -->
+    <div *ngIf="floatActionType === 'add'" style="margin-bottom:10px">
+      <label style="font-size:12px;font-weight:600;color:var(--mut);display:block;margin-bottom:4px">Addition Reason</label>
+      <input type="text" [(ngModel)]="floatReason" placeholder="e.g. Change Replenishment" style="width:100%;margin-bottom:6px">
+      <div class="quick-presets">
+        <button class="chip" *ngFor="let r of ['Change Top-Up', 'Extra Cash Float', 'Shift Handover']" (click)="floatReason = r">{{ r }}</button>
+      </div>
+    </div>
+
+    <!-- Total Amount Field -->
+    <div class="denom-total-box">
+      <label style="font-size:12px;font-weight:600;color:var(--mut);display:block;margin-bottom:4px">
+        {{ floatActionType === 'add' ? 'Amount to Add (LKR)' : 'Total Float Amount (LKR)' }}
+      </label>
+      <input type="number" min="0" [(ngModel)]="floatInput" (keyup.enter)="saveFloat()" placeholder="e.g. 5000"
+             style="width:100%;font-size:20px;font-weight:bold;text-align:right" autofocus>
+    </div>
+
+    <!-- Quick Presets -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;margin-bottom:6px">
+      <div class="quick-presets">
+        <button class="chip" *ngFor="let p of [1000, 2000, 5000, 10000]" (click)="floatInput = '' + p">{{ p | currencyLkr }}</button>
+      </div>
+      <button class="btn-link" style="font-size:12px;padding:2px 6px" (click)="clearDenominations('float')" *ngIf="calcDenomTotal() > 0">
+        Reset Counts
+      </button>
+    </div>
+
+    <!-- Denomination Counter Section -->
+    <div class="denom-section">
+      <div class="denom-section-header">
+        <span>Denomination Breakdown (Enter Count Only)</span>
+        <span class="denom-calc-badge" *ngIf="calcDenomTotal() > 0">
+          Sum: {{ calcDenomTotal() | currencyLkr }}
+        </span>
+      </div>
+
+      <div class="denom-grid">
+        <div class="denom-row" *ngFor="let d of denominations">
+          <span class="denom-badge">Rs {{ d.label }}</span>
+          <span class="denom-times">×</span>
+          <input type="number" min="0" step="1" [(ngModel)]="d.count" (input)="onDenomCountChange('float')"
+                 placeholder="0" class="denom-input">
+          <span class="denom-subtotal">{{ (d.value * (d.count || 0)) | currencyLkr }}</span>
+        </div>
+      </div>
+    </div>
+
+    <p *ngIf="cashError" class="disc-error">{{ cashError }}</p>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn mut" style="flex:1" (click)="closeCashModals()">Cancel</button>
+      <button class="btn acc" style="flex:2" [disabled]="cashBusy" (click)="saveFloat()">
+        {{ floatActionType === 'add' ? 'Add Cash to Drawer' : 'Save Float' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Paid In / Paid Out Modal -->
+<div class="keypad-modal-backdrop" *ngIf="showPaidModal" (click)="closePaidModal()">
+  <div class="keypad-modal card" (click)="$event.stopPropagation()" style="max-width:440px;width:100%">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0;font-size:16px;display:flex;align-items:center;gap:6px">
+        {{ paidMode === 'paid_in' ? '📥 Paid In (Add Cash to Drawer)' : '📤 Paid Out (Petty Cash Disbursement)' }}
+      </h3>
+      <button class="btn-close" (click)="closePaidModal()">✕</button>
+    </div>
+    <p class="mut" style="margin:0 0 10px;font-size:13px">
+      {{ paidMode === 'paid_in' ? 'Record cash placed into the till register.' : 'Record cash taken out of the drawer for disbursements.' }}
+    </p>
+
+    <div class="seg" style="margin-bottom:10px">
+      <button [class.on]="paidMode === 'paid_in'" (click)="paidMode = 'paid_in'">Paid In (+)</button>
+      <button [class.on]="paidMode === 'paid_out'" (click)="paidMode = 'paid_out'">Paid Out (-)</button>
+    </div>
+
+    <label style="font-size:12px;font-weight:600;color:var(--mut);display:block;margin-bottom:4px">
+      Amount (LKR)
+    </label>
+    <input type="number" min="0" [(ngModel)]="paidAmountInput" placeholder="e.g. 1500"
+           style="width:100%;font-size:20px;font-weight:bold;text-align:right;margin-bottom:8px" autofocus>
+
+    <div class="quick-presets" style="margin-bottom:10px">
+      <button class="chip" *ngFor="let p of [500, 1000, 2000, 5000]" (click)="paidAmountInput = '' + p">{{ p | currencyLkr }}</button>
+    </div>
+
+    <label style="font-size:12px;font-weight:600;color:var(--mut);display:block;margin-bottom:4px">
+      Reason / Description
+    </label>
+    <input type="text" [(ngModel)]="paidReasonInput" placeholder="Reason for this cash entry"
+           style="width:100%;margin-bottom:6px">
+
+    <div class="quick-presets" *ngIf="paidMode === 'paid_in'">
+      <button class="chip" *ngFor="let r of ['Float Addition', 'Change Top-Up', 'Cash In Till', 'Owner Deposit']" (click)="paidReasonInput = r">{{ r }}</button>
+    </div>
+    <div class="quick-presets" *ngIf="paidMode === 'paid_out'">
+      <button class="chip" *ngFor="let r of ['Petty Cash', 'Courier / Delivery', 'Tea / Water', 'Office Supplies']" (click)="paidReasonInput = r">{{ r }}</button>
+    </div>
+
+    <p *ngIf="paidError" class="disc-error">{{ paidError }}</p>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn mut" style="flex:1" (click)="closePaidModal()">Cancel</button>
+      <button class="btn acc" style="flex:2" [disabled]="paidBusy" (click)="confirmPaidTransaction()">
+        {{ paidMode === 'paid_in' ? 'Save Paid In' : 'Save Paid Out' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Close Cash Modal -->
+<div class="keypad-modal-backdrop" *ngIf="showClose && cashSession" (click)="closeCashModals()">
+  <div class="keypad-modal card denom-modal" (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0;font-size:16px">
+        {{ drawerCountReportMode === 'cashier_reading' ? '📋 Cashier Reading - Drawer Check' :
+           (drawerCountReportMode === 'z_reading' || zReadingRequestedMode ? '📋 Day End Z-Reading - Close Drawer' : 'Close Cash') }} - Terminal {{ terminal }}
+      </h3>
+      <button class="btn-close" (click)="closeCashModals()">✕</button>
+    </div>
+    <div class="mut" style="margin-bottom:8px;font-size:13px">Shift opened {{ cashSession.opened_at | date:'yyyy-MM-dd HH:mm' }} by {{ cashSession.cashier }}</div>
+
+    <div *ngIf="drawerCountReportMode === 'cashier_reading'" style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:8px 10px;border-radius:6px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:6px">
+      <span>⚠️</span>
+      <span><b>Temporary Drawer Audit:</b> Enter counted cash to check if cashier has a Shortage or Excess. Shift will <u>REMAIN OPEN</u> (will not close cash).</span>
+    </div>
+
+    <div *ngIf="drawerCountReportMode === 'z_reading' || zReadingRequestedMode" style="background:#e0f2fe;border:1px solid #0284c7;color:#0369a1;padding:8px 10px;border-radius:6px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:6px">
+      <span>ℹ️</span>
+      <span><b>Day End Close:</b> Enter physical drawer cash to calculate final Shortage / Excess, close shift, and generate Z-Reading.</span>
+    </div>
+
+    <div class="line"><span>Opening float</span><span>{{ cashSession.opening_float | currencyLkr }}</span></div>
+    <div class="line"><span>Cash sales ({{ cashSession.cash_sales_count }})</span><span>{{ cashSession.cash_sales_total | currencyLkr }}</span></div>
+    <div class="total"><span>Cash in hand (Expected)</span><span>{{ cashSession.expected_cash | currencyLkr }}</span></div>
+
+    <!-- Total Counted Field -->
+    <div class="denom-total-box" style="margin-top:10px">
+      <label style="font-size:12px;font-weight:600;color:var(--mut);display:block;margin-bottom:4px">
+        Counted Cash in Drawer (LKR)
+      </label>
+      <input type="number" min="0" [(ngModel)]="countedInput" (keyup.enter)="confirmCloseCash()" placeholder="Count and enter"
+             style="width:100%;font-size:20px;font-weight:bold;text-align:right" autofocus>
+    </div>
+
+    <!-- Denomination Counter Section -->
+    <div class="denom-section">
+      <div class="denom-section-header">
+        <span>Denomination Counter (Enter Count Only)</span>
+        <button class="btn-link" style="font-size:11px" (click)="clearDenominations('close')" *ngIf="calcDenomTotal() > 0">
+          Reset Counts
+        </button>
+      </div>
+
+      <div class="denom-grid">
+        <div class="denom-row" *ngFor="let d of denominations">
+          <span class="denom-badge">Rs {{ d.label }}</span>
+          <span class="denom-times">×</span>
+          <input type="number" min="0" step="1" [(ngModel)]="d.count" (input)="onDenomCountChange('close')"
+                 placeholder="0" class="denom-input">
+          <span class="denom-subtotal">{{ (d.value * (d.count || 0)) | currencyLkr }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="cashDifference() !== null" class="balance-box" style="margin-top:8px"
+         [ngClass]="cashDifference() === 0 ? 'bg-success' : 'bg-warning'">
+      <span>{{ cashDifference() === 0 ? 'Balanced' : (cashDifference()! > 0 ? 'Over' : 'Short') }}:</span>
+      <b class="balance-amount">{{ cashDifference() | currencyLkr }}</b>
+    </div>
+
+    <p *ngIf="cashError" class="disc-error">{{ cashError }}</p>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn mut" style="flex:1" (click)="closeCashModals()">Cancel</button>
+      <button class="btn" [ngClass]="drawerCountReportMode === 'cashier_reading' ? 'acc' : 'red'" style="flex:2" [disabled]="cashBusy" (click)="confirmCloseCash()">
+        {{ drawerCountReportMode === 'cashier_reading' ? (drawerCountAction === 'view' ? 'Check & View Cashier Reading' : 'Check & Print Cashier Reading') :
+           (drawerCountReportMode === 'z_reading' || zReadingRequestedMode ? 'Confirm Cash & Generate Z-Reading' : 'Close Cash & Print Z-Reading') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Cashier Reports Modal -->
+<div class="keypad-modal-backdrop" *ngIf="showCashierReports" (click)="closeCashierReports()">
+  <div class="keypad-modal card cashier-reports-modal" (click)="$event.stopPropagation()">
+    <div class="cashier-reports-header">
+      <h3 style="margin:0;font-size:16px;display:flex;align-items:center;gap:6px;color:#003366">
+        📋 Cashier Reports
+      </h3>
+      <button class="btn-close" (click)="closeCashierReports()">✕</button>
+    </div>
+
+    <!-- Reports Table Container -->
+    <div class="reports-list-container" tabindex="0" (keydown.arrowdown)="moveReportSelection(1)" (keydown.arrowup)="moveReportSelection(-1)" (keydown.enter)="viewSelectedReport()">
+      <div *ngFor="let rep of cashierReportsList; let i = index"
+           class="report-list-row"
+           [class.active-row]="selectedReportIndex === i"
+           (click)="selectReportRow(i)"
+           (dblclick)="onReportRowDoubleClick(i)">
+        <span class="report-title">{{ rep.title }}</span>
+      </div>
+    </div>
+
+    <!-- Modal Action Buttons -->
+    <div class="cashier-reports-actions">
+      <button class="btn-report-act" (click)="viewSelectedReport()">View</button>
+      <button class="btn-report-act acc" (click)="selectSelectedReport()">Select</button>
+      <button class="btn-report-act mut" (click)="closeCashierReports()">Exit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Detail Viewer Modal -->
+<div class="keypad-modal-backdrop" *ngIf="showReportDetailModal && activeReportDetail" (click)="closeReportDetailModal()">
+  <div class="keypad-modal card report-detail-modal" (click)="$event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--bd);padding-bottom:8px">
+      <div>
+        <h3 style="margin:0;font-size:17px;color:var(--pri)">{{ activeReportDetail.title }}</h3>
+        <small class="mut" *ngIf="activeReportDetail.subtitle">{{ activeReportDetail.subtitle }}</small>
+      </div>
+      <button class="btn-close" (click)="closeReportDetailModal()">✕</button>
+    </div>
+
+    <div class="report-detail-body" [innerHTML]="activeReportDetail.contentHtml"></div>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn mut" style="flex:1" (click)="closeReportDetailModal()">Close</button>
+      <button class="btn acc" style="flex:2" (click)="printCurrentReportDetail()">🖨️ Print Report Slip</button>
+    </div>
+  </div>
+</div>
+
+<!-- Unified Payment Method Details Modal -->
+<div class="dlg-backdrop" *ngIf="showPaymentDetailModal" (click)="closePaymentDetailModal()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()" style="max-width:440px;width:92%">
+    
+    <!-- 1. Card Payment (Visa, MasterCard, Amex) -->
+    <div *ngIf="paymentModalType === 'card'">
+      <h3>{{ cardForm.cardType }} Card Payment</h3>
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;margin:12px 0;display:flex;justify-content:space-between">
+        <span class="mut">Total Payable:</span>
+        <b style="font-size:16px;color:var(--pri)">{{ getCartTotal() | currencyLkr }}</b>
+      </div>
+      <div class="fg" style="display:flex;flex-direction:column;gap:12px">
+        <label>
+          Card Bank / POS Machine
+          <select [(ngModel)]="cardForm.bank" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+            <option value="Commercial Bank">Commercial Bank POS</option>
+            <option value="Bank of Ceylon">BOC Terminal</option>
+            <option value="Sampath Bank">Sampath Bank POS</option>
+            <option value="HNB">Hatton National Bank</option>
+            <option value="Seylan Bank">Seylan Bank POS</option>
+          </select>
+        </label>
+        <label>
+          Approval / Auth Code (from POS slip)
+          <input type="text" [(ngModel)]="cardForm.authCode" placeholder="e.g. 981244" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" autofocus />
+        </label>
+        <label>
+          Card Last 4 Digits (Optional)
+          <input type="text" [(ngModel)]="cardForm.last4" placeholder="e.g. 4123" maxlength="4" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+        </label>
+      </div>
+      <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button class="btn alt" (click)="closePaymentDetailModal()">Cancel</button>
+        <button class="btn" (click)="confirmCardPayment()">Confirm {{ cardForm.cardType }}</button>
+      </div>
+    </div>
+
+    <!-- 2. Cheque Payment -->
+    <div *ngIf="paymentModalType === 'cheque'">
+      <h3>Cheque Payment Settlement</h3>
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;margin:12px 0;display:flex;justify-content:space-between">
+        <span class="mut">Total Payable:</span>
+        <b style="font-size:16px;color:var(--pri)">{{ getCartTotal() | currencyLkr }}</b>
+      </div>
+      <div class="fg" style="display:flex;flex-direction:column;gap:12px">
+        <label>
+          Cheque Number *
+          <input type="text" [(ngModel)]="chequeForm.chequeNo" placeholder="e.g. 001928" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" autofocus />
+        </label>
+        <label>
+          Bank Name *
+          <select [(ngModel)]="chequeForm.bankName" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+            <option value="Commercial Bank">Commercial Bank</option>
+            <option value="Bank of Ceylon">Bank of Ceylon (BOC)</option>
+            <option value="People's Bank">People's Bank</option>
+            <option value="Sampath Bank">Sampath Bank</option>
+            <option value="HNB">Hatton National Bank (HNB)</option>
+            <option value="Seylan Bank">Seylan Bank</option>
+            <option value="DFCC Bank">DFCC Bank</option>
+          </select>
+        </label>
+        <label>
+          Branch Name
+          <input type="text" [(ngModel)]="chequeForm.branch" placeholder="e.g. Mawathagama, Kurunegala" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+        </label>
+        <label>
+          Cheque Date
+          <input type="date" [(ngModel)]="chequeForm.chequeDate" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+        </label>
+      </div>
+      <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button class="btn alt" (click)="closePaymentDetailModal()">Cancel</button>
+        <button class="btn" (click)="confirmChequePayment()">Confirm Cheque</button>
+      </div>
+    </div>
+
+    <!-- 3. Credit / On Account -->
+    <div *ngIf="paymentModalType === 'credit'">
+      <h3>Credit Customer Sale</h3>
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;margin:12px 0;display:flex;justify-content:space-between">
+        <span class="mut">Total Payable:</span>
+        <b style="font-size:16px;color:var(--bad)">{{ getCartTotal() | currencyLkr }}</b>
+      </div>
+      <div class="fg" style="display:flex;flex-direction:column;gap:12px">
+        <label>
+          Customer Name *
+          <input type="text" [(ngModel)]="creditForm.customerName" placeholder="e.g. Mr Gamage" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" autofocus />
+        </label>
+        <label>
+          Customer Contact Number *
+          <input type="text" [(ngModel)]="creditForm.customerPhone" placeholder="e.g. 0703885240" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+        </label>
+        <label>
+          Credit Terms / Due Period
+          <select [(ngModel)]="creditForm.dueDate" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+            <option value="7 Days">7 Days Credit</option>
+            <option value="14 Days">14 Days Credit</option>
+            <option value="30 Days">30 Days Credit</option>
+            <option value="End of Month">End of Current Month</option>
+          </select>
+        </label>
+      </div>
+      <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button class="btn alt" (click)="closePaymentDetailModal()">Cancel</button>
+        <button class="btn" (click)="confirmCreditPayment()">Confirm Credit</button>
+      </div>
+    </div>
+
+    <!-- 4. Split Payment -->
+    <div *ngIf="paymentModalType === 'split'">
+      <h3>Split Payment Allocation</h3>
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;margin:12px 0;display:flex;justify-content:space-between">
+        <span class="mut">Total Payable:</span>
+        <b style="font-size:16px;color:var(--pri)">{{ getCartTotal() | currencyLkr }}</b>
+      </div>
+      <div class="fg" style="display:flex;flex-direction:column;gap:12px">
+        <label>
+          Cash Amount (LKR) *
+          <input type="number" [(ngModel)]="splitForm.cashAmount" (ngModelChange)="onSplitCashChange()" min="0" [max]="getCartTotal()" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);font-size:15px;font-weight:bold" autofocus />
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>
+            Secondary Method *
+            <select [(ngModel)]="splitForm.secondaryMethod" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)">
+              <option value="Visa">Visa Card</option>
+              <option value="MasterCard">MasterCard</option>
+              <option value="Amex">Amex</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Credit Note">Credit Note</option>
+            </select>
+          </label>
+          <label>
+            Secondary Amount (LKR) *
+            <input type="number" [(ngModel)]="splitForm.secondaryAmount" min="0" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);font-size:15px;font-weight:bold" />
+          </label>
+        </div>
+        <label>
+          Card / Cheque Reference (Auth Code / Number)
+          <input type="text" [(ngModel)]="splitForm.reference" placeholder="e.g. Auth #88219" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" />
+        </label>
+        <div style="font-size:12px;font-weight:600" [style.color]="((splitForm.cashAmount || 0) + (splitForm.secondaryAmount || 0)) === getCartTotal() ? '#27ae60' : '#eb5757'">
+          Allocated: {{ ((splitForm.cashAmount || 0) + (splitForm.secondaryAmount || 0)) | currencyLkr }} 
+          ({{ ((splitForm.cashAmount || 0) + (splitForm.secondaryAmount || 0)) === getCartTotal() ? '✓ Balanced' : 'Unbalanced' }})
+        </div>
+      </div>
+      <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button class="btn alt" (click)="closePaymentDetailModal()">Cancel</button>
+        <button class="btn" (click)="confirmSplitPayment()">Confirm Split</button>
+      </div>
+    </div>
+
+    <!-- 5. Gift Voucher -->
+    <div *ngIf="paymentModalType === 'voucher'">
+      <h3>Gift Voucher Settlement</h3>
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;margin:12px 0;display:flex;justify-content:space-between">
+        <span class="mut">Total Payable:</span>
+        <b style="font-size:16px;color:var(--pri)">{{ getCartTotal() | currencyLkr }}</b>
+      </div>
+      <div class="fg" style="display:flex;flex-direction:column;gap:12px">
+        <label>
+          Gift Voucher Serial Number *
+          <input type="text" [(ngModel)]="voucherForm.voucherNo" placeholder="e.g. GV-2026-0045" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);letter-spacing:1px" autofocus />
+        </label>
+        <label>
+          Voucher Redemption Amount (LKR)
+          <input type="number" [(ngModel)]="voucherForm.voucherAmount" min="0" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);font-size:15px;font-weight:bold" />
+        </label>
+      </div>
+      <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button class="btn alt" (click)="closePaymentDetailModal()">Cancel</button>
+        <button class="btn" (click)="confirmVoucherPayment()">Apply Voucher</button>
+      </div>
+    </div>
+
+    <!-- 6. Loyalty Points -->
+    <div *ngIf="paymentModalType === 'loyalty'">
+      <h3>Loyalty Points Redemption</h3>
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;margin:12px 0;display:flex;justify-content:space-between">
+        <span class="mut">Total Payable:</span>
+        <b style="font-size:16px;color:var(--pri)">{{ getCartTotal() | currencyLkr }}</b>
+      </div>
+      <div class="fg" style="display:flex;flex-direction:column;gap:12px">
+        <label>
+          Customer Mobile (Loyalty Account)
+          <input type="text" [(ngModel)]="loyaltyForm.phone" placeholder="e.g. 0771234567" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd)" autofocus />
+        </label>
+        <div style="background:var(--bg);padding:8px 12px;border-radius:6px;font-size:12px">
+          Available Balance: <b>{{ loyaltyForm.availablePoints }} points</b> (Value: Rs. {{ loyaltyForm.availablePoints }}.00)
+        </div>
+        <label>
+          Points to Redeem (1 pt = Rs. 1.00)
+          <input type="number" [(ngModel)]="loyaltyForm.pointsToRedeem" min="1" [max]="loyaltyForm.availablePoints" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);font-size:15px;font-weight:bold" />
+        </label>
+      </div>
+      <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button class="btn alt" (click)="closePaymentDetailModal()">Cancel</button>
+        <button class="btn" (click)="confirmLoyaltyPayment()">Redeem Points</button>
+      </div>
+    </div>
+
+    <!-- 7. Credit Note -->
+    <div *ngIf="paymentModalType === 'credit_note'">
+      <h3>Credit Note Settlement</h3>
+      <div style="background:var(--bg);padding:10px 14px;border-radius:6px;margin:12px 0;display:flex;justify-content:space-between">
+        <span class="mut">Total Payable:</span>
+        <b style="font-size:16px;color:var(--pri)">{{ getCartTotal() | currencyLkr }}</b>
+      </div>
+      <div class="fg" style="display:flex;flex-direction:column;gap:12px">
+        <label>
+          Credit Note Number (from Return Slip) *
+          <input type="text" [(ngModel)]="creditNoteForm.creditNoteNo" placeholder="e.g. CN-MW-0012" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);letter-spacing:1px" autofocus />
+        </label>
+        <label>
+          Credit Note Value (LKR) *
+          <input type="number" [(ngModel)]="creditNoteForm.amount" min="0" style="padding:8px 10px;border-radius:6px;border:1px solid var(--bd);font-size:15px;font-weight:bold" />
+        </label>
+      </div>
+      <div class="dlg-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button class="btn alt" (click)="closePaymentDetailModal()">Cancel</button>
+        <button class="btn" (click)="confirmCreditNotePayment()">Apply Credit Note</button>
+      </div>
+    </div>
+
   </div>
 </div>

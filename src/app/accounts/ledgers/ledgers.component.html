@@ -1,0 +1,23 @@
+<div class="card">
+  <h3>Chart of Accounts & General Ledger</h3>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th>Type</th>
+          <th>Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let acc of accounts">
+          <td>{{ acc.code }}</td>
+          <td>{{ acc.name }}</td>
+          <td>{{ acc.type }}</td>
+          <td>{{ acc.balance | currencyLkr }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

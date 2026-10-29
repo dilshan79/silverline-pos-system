@@ -1,0 +1,21 @@
+<div class="dlg-backdrop" (click)="closed.emit()">
+  <div class="dlg-box card" (click)="$event.stopPropagation()">
+    <h3>Scan Barcode / IMEI for GRN Intake</h3>
+    <div class="fg">
+      <label>
+        Scan IMEI / Serial
+        <input type="text" [(ngModel)]="scannedImei" (keyup.enter)="addImei()" placeholder="Scan barcode or type IMEI..." />
+      </label>
+    </div>
+    <div style="margin-top: 10px;">
+      <p><strong>Scanned Count:</strong> {{ imeiList.length }}</p>
+      <ul>
+        <li *ngFor="let imei of imeiList">{{ imei }}</li>
+      </ul>
+    </div>
+    <div class="dlg-actions">
+      <button class="btn alt" (click)="closed.emit()">Close</button>
+      <button class="btn" (click)="finish()">Complete Intake</button>
+    </div>
+  </div>
+</div>

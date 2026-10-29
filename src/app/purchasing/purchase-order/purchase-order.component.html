@@ -1,0 +1,99 @@
+<div class="hd">
+  <h2>Purchase orders</h2>
+  <div>
+    <button class="btn" (click)="toggleForm()">+ New PO</button>
+  </div>
+</div>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+  <input class="sr" [(ngModel)]="searchText" placeholder="Search…">
+  <select [(ngModel)]="selectedSupplier">
+    <option value="">All suppliers</option>
+    <option value="Singer">Singer</option>
+    <option value="Mobil King">Mobil King</option>
+  </select>
+  <select [(ngModel)]="selectedStatus">
+    <option value="">All status</option>
+    <option value="Sent">Sent</option>
+    <option value="Received">Received</option>
+    <option value="Draft">Draft</option>
+  </select>
+</div>
+
+<div class="tw card">
+  <table>
+    <thead>
+      <tr>
+        <th>PO No</th>
+        <th>Supplier</th>
+        <th>Date</th>
+        <th>Total</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let po of filteredOrders">
+        <td>{{ po.poNo || po.po_number || po.id }}</td>
+        <td>{{ po.supplier || po.supplier_name }}</td>
+        <td>{{ po.date || po.created_at }}</td>
+        <td>{{ po.total | currencyLkr }}</td>
+        <td><app-status-badge [status]="po.status"></app-status-badge></td>
+      </tr>
+      <tr *ngIf="filteredOrders.length === 0">
+        <td colspan="5" class="mut" style="text-align:center;padding:16px">No purchase orders found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:12px" *ngIf="showForm">
+  <b>New PO</b>
+  <div class="fg" style="margin-top:8px">
+    <label>
+      Supplier
+      <select [(ngModel)]="newPo.supplier">
+        <option>Singer</option>
+        <option>Mobil King</option>
+        <option>Softlogic</option>
+      </select>
+    </label>
+    <label>
+      Location
+      <select [(ngModel)]="newPo.location">
+        <option>Fair Road (SH)</option>
+        <option>Bravo Bus Stand (MW)</option>
+        <option>Super & Mobile (SS)</option>
+      </select>
+    </label>
+    <label>
+      Expected date
+      <input type="date" [(ngModel)]="newPo.expectedDate">
+    </label>
+  </div>
+
+  <div class="tw" style="margin-top:12px">
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Qty</th>
+          <th>Cost</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of newPo.items; let i = index">
+          <td><input type="text" [(ngModel)]="item.item" placeholder="Item name / code" style="width:100%"></td>
+          <td><input type="number" [(ngModel)]="item.qty" style="width:80px"></td>
+          <td><input type="number" [(ngModel)]="item.cost" style="width:120px"></td>
+          <td><button class="btn red" style="min-height:30px;padding:4px 8px;font-size:12px" (click)="removeItemLine(i)">✕</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn alt" (click)="addItemLine()">+ Add Item</button>
+    <button class="btn acc" style="margin-left:auto" (click)="savePo()">Save PO</button>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<div class="card">
+  <h3>Bank Statement Reconciliation</h3>
+  <div class="fg">
+    <div class="card">
+      <span class="mut">Bank Statement Balance</span>
+      <h4>{{ bankBalance | currencyLkr }}</h4>
+    </div>
+    <div class="card">
+      <span class="mut">System Ledger Balance</span>
+      <h4>{{ bookBalance | currencyLkr }}</h4>
+    </div>
+  </div>
+  <div style="margin-top: 16px;">
+    <span class="bd g" *ngIf="reconciled">✓ Accounts Fully Reconciled</span>
+  </div>
+</div>

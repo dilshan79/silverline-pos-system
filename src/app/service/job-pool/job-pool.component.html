@@ -1,0 +1,96 @@
+<div class="hd">
+  <h2>🔧 Service Job Pool</h2>
+  <button class="btn" routerLink="/service/new">+ New Job</button>
+</div>
+
+<!-- Kanban Board -->
+<div class="board">
+
+  <div class="col">
+    <h3>📥 Waiting ({{ getByStatus('Waiting').length }})</h3>
+    <div *ngFor="let job of getByStatus('Waiting')" class="card job wait" style="margin-bottom:10px;border-left:4px solid var(--bad)">
+      <div style="display:flex;justify-content:space-between">
+        <strong>{{ job.jobNo }}</strong>
+        <span class="bd r">Waiting</span>
+      </div>
+      <div class="mut" style="margin:4px 0">{{ job.customerName }}</div>
+      <div>{{ job.serviceType }}</div>
+      <div class="mut" style="font-size:11px;margin-top:4px">{{ job.deviceModel }}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn alt" style="flex:1;font-size:12px" (click)="assignJob(job)">Assign Tech</button>
+        <button class="btn" style="flex:1;font-size:12px" (click)="selectJob(job.jobNo)">View</button>
+      </div>
+    </div>
+    <p *ngIf="getByStatus('Waiting').length === 0" class="mut">No waiting jobs</p>
+  </div>
+
+  <div class="col">
+    <h3>🔨 In Progress ({{ getByStatus('In Progress').length }})</h3>
+    <div *ngFor="let job of getByStatus('In Progress')" class="card job" style="margin-bottom:10px;border-left:4px solid var(--info)">
+      <div style="display:flex;justify-content:space-between">
+        <strong>{{ job.jobNo }}</strong>
+        <span class="bd b">In Progress</span>
+      </div>
+      <div class="mut" style="margin:4px 0">{{ job.customerName }}</div>
+      <div>{{ job.serviceType }}</div>
+      <div class="mut" style="font-size:11px;margin-top:4px">Tech: {{ job.technicianName || 'N/A' }}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn alt" style="flex:1;font-size:12px" (click)="updateStatus(job, 'Waiting Parts')">Need Parts</button>
+        <button class="btn" style="flex:1;font-size:12px" (click)="updateStatus(job, 'Completed')">Done ✓</button>
+      </div>
+    </div>
+    <p *ngIf="getByStatus('In Progress').length === 0" class="mut">No jobs in progress</p>
+  </div>
+
+  <div class="col">
+    <h3>⏳ Waiting Parts ({{ getByStatus('Waiting Parts').length }})</h3>
+    <div *ngFor="let job of getByStatus('Waiting Parts')" class="card job" style="margin-bottom:10px;border-left:4px solid var(--acc)">
+      <div style="display:flex;justify-content:space-between">
+        <strong>{{ job.jobNo }}</strong>
+        <span class="bd y">Waiting Parts</span>
+      </div>
+      <div class="mut" style="margin:4px 0">{{ job.customerName }}</div>
+      <div>{{ job.serviceType }}</div>
+      <div class="mut" style="font-size:11px;margin-top:4px">{{ job.deviceModel }}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn" style="flex:1;font-size:12px" (click)="updateStatus(job, 'In Progress')">Resume</button>
+      </div>
+    </div>
+    <p *ngIf="getByStatus('Waiting Parts').length === 0" class="mut">No jobs waiting parts</p>
+  </div>
+
+  <div class="col">
+    <h3>✅ Completed ({{ getByStatus('Completed').length }})</h3>
+    <div *ngFor="let job of getByStatus('Completed')" class="card job done" style="margin-bottom:10px;border-left:4px solid var(--ok)">
+      <div style="display:flex;justify-content:space-between">
+        <strong>{{ job.jobNo }}</strong>
+        <span class="bd g">Completed</span>
+      </div>
+      <div class="mut" style="margin:4px 0">{{ job.customerName }}</div>
+      <div>{{ job.serviceType }}</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn alt" style="flex:1;font-size:12px" (click)="updateStatus(job, 'Delivered')">Deliver</button>
+        <button class="btn acc" style="flex:1;font-size:12px" (click)="selectJob(job.jobNo)">Invoice</button>
+      </div>
+    </div>
+    <p *ngIf="getByStatus('Completed').length === 0" class="mut">No completed jobs</p>
+  </div>
+
+</div>
+
+<!-- Assign Technician Modal -->
+<div *ngIf="assigningJob" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:999">
+  <div class="card" style="min-width:320px;max-width:420px;width:90%">
+    <h3 style="margin:0 0 12px">Assign Technician – {{ assigningJob.jobNo }}</h3>
+    <label>Select Technician
+      <select [(ngModel)]="selectedTech" style="width:100%;margin-top:4px">
+        <option value="">-- Select --</option>
+        <option *ngFor="let t of technicians" [value]="t.id">{{ t.fullName }}</option>
+      </select>
+    </label>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn" style="flex:1" (click)="confirmAssign()">Assign</button>
+      <button class="btn alt" style="flex:1" (click)="assigningJob = null">Cancel</button>
+    </div>
+  </div>
+</div>
