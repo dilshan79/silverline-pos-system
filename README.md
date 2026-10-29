@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SilverPos
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.3.11.
@@ -25,3 +26,7 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+=======
+# silverline-pos-system
+A Point of Sale (POS) and inventory management system built with Angular, PHP, and MySQL. Features include product management, barcode scanning, sales and billing, inventory tracking, GRN (Goods Received Note), supplier management, and reporting. Designed to simplify retail operations with an efficient and user-friendly interface.
+>>>>>>> a281400fb8c233929dadec9d1890e718c51d78a6
